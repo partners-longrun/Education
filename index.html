@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="파트너스 교육관 - 성공적인 영업을 위한 교육 플랫폼">
+    <title>파트너스 교육관</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- 로딩 화면 -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-text">파트너스본부</div>
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <!-- 로그인 화면 -->
+    <div id="login-screen" class="login-screen" style="display: none;">
+        <div class="bg-shapes">
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+        </div>
+
+        <div class="branding-panel">
+            <div class="branding-content">
+                <h1 class="branding-title">파트너스본부</h1>
+                <p class="branding-subtitle">
+                    성공적인 영업을 위한 교육 플랫폼<br>
+                    언제 어디서나 학습하고 성장하세요
+                </p>
+                <div class="branding-features">
+                    <div class="feature-item">
+                        <div class="feature-icon">📺</div>
+                        <span class="feature-text">다양한 교육 영상과 자료</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📚</div>
+                        <span class="feature-text">체계적인 커리큘럼</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">💬</div>
+                        <span class="feature-text">동료들과 함께하는 학습</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="login-panel">
+            <div class="login-container">
+                <!-- 모바일용 로고 -->
+                <div class="login-mobile-logo">
+                    <h1 class="login-mobile-title">파트너스본부</h1>
+                </div>
+
+                <div class="login-header">
+                    <h2 class="login-title">파트너스 <span>교육관</span></h2>
+                    <p class="login-subtitle">계정 정보를 입력해 주세요</p>
+                </div>
+
+                <form id="login-form" class="login-form">
+                    <div class="form-group">
+                        <label class="form-label">사번</label>
+                        <input type="text" id="employee-id" class="form-input" placeholder="사번을 입력하세요"
+                            autocomplete="username">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">비밀번호</label>
+                        <input type="password" id="password" class="form-input" placeholder="비밀번호를 입력하세요"
+                            autocomplete="current-password">
+                    </div>
+
+                    <div class="form-helper">
+                        <label class="remember-me">
+                            <input type="checkbox" id="remember-me">
+                            로그인 상태 유지
+                        </label>
+                    </div>
+
+                    <button type="submit" class="login-button" id="login-btn">
+                        <span class="btn-text">로그인</span>
+                        <span class="btn-loading" style="display: none;">로그인 중...</span>
+                    </button>
+
+                    <div id="login-error" class="login-error" style="display: none;"></div>
+                </form>
+
+                <div class="login-divider">도움이 필요하신가요?</div>
+
+                <div class="help-section">
+                    <p class="help-text">로그인에 문제가 있으시면 관리자에게 문의하세요</p>
+                </div>
+
+                <div class="login-footer">
+                    © 2024 파트너스 교육관. All rights reserved.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 앱 화면 -->
+    <div id="app-screen" class="app-container" style="display: none;">
+        <!-- 사이드바 -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-text">파트너스본부</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav" id="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">메뉴</div>
+                    <a href="#" class="nav-item active" data-page="dashboard">
+                        <span class="nav-item-icon">🏠</span>
+                        대시보드
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">게시판</div>
+                    <div id="board-nav-list">
+                        <!-- 동적으로 채워짐 -->
+                    </div>
+                </div>
+
+                <div class="nav-section admin-section" id="admin-nav" style="display: none;">
+                    <div class="nav-section-title">관리자</div>
+                    <a href="#" class="nav-item" data-page="admin-boards">
+                        <span class="nav-item-icon">📋</span>
+                        게시판 관리
+                    </a>
+                    <a href="#" class="nav-item" data-page="admin-posts">
+                        <span class="nav-item-icon">📝</span>
+                        게시글 관리
+                    </a>
+                    <a href="#" class="nav-item" data-page="admin-logs">
+                        <span class="nav-item-icon">📊</span>
+                        로그인 기록
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile" id="user-profile">
+                    <div class="user-avatar" id="user-avatar">?</div>
+                    <div class="user-info">
+                        <div class="user-name" id="user-name">-</div>
+                        <div class="user-role" id="user-role">-</div>
+                    </div>
+                </div>
+                <div class="sidebar-actions">
+                    <button class="sidebar-action-btn change-pw-btn" id="change-pw-btn"
+                        onclick="showChangePasswordModal(false)" title="비밀번호 변경">🔑 비밀번호 변경</button>
+                    <button class="sidebar-action-btn logout-action-btn" id="logout-btn" title="로그아웃">🔓 로그아웃</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content">
+            <!-- 헤더 -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menu-toggle">☰</button>
+                    <h1 class="page-title" id="page-title">대시보드</h1>
+                </div>
+                <div class="header-right">
+                    <div class="search-box">
+                        <span>🔍</span>
+                        <input type="text" id="search-input" placeholder="검색...">
+                    </div>
+                </div>
+            </header>
+
+            <!-- 페이지 컨테이너 -->
+            <div class="page-container" id="page-container">
+                <!-- 동적으로 채워짐 -->
+            </div>
+        </main>
+    </div>
+
+    <!-- 모달 컨테이너 -->
+    <div id="modal-container"></div>
+
+    <!-- 토스트 메시지 -->
+    <div id="toast-container"></div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
