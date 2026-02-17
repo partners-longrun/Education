@@ -2132,3 +2132,125 @@ select {
     align-items: center;
     gap: 6px;
 }
+
+
+/* ========== [NEW] Dashboard Loading Overlay ========== */
+.dashboard-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--background);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.dashboard-loading-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.dashboard-loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(244, 116, 35, 0.2);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+.dashboard-loading-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* ========== [NEW] Simple Dashboard List ========== */
+.simple-post-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    /* Indentation for list */
+    padding-left: 12px;
+}
+
+.simple-post-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    gap: 16px;
+}
+
+/* Remove default li styling */
+.simple-post-item:first-child {
+    border-top: 1px solid var(--border);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.simple-post-item:last-child {
+    border-bottom: none;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.simple-post-item:hover {
+    background: var(--background);
+    padding-left: 20px;
+    /* Slight movement effect */
+}
+
+.simple-post-title {
+    font-size: 15px;
+    color: var(--text-primary);
+    font-weight: 500;
+    /* Truncate text */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+    /* Required for flex text truncation */
+}
+
+.simple-post-date {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    text-align: right;
+    width: 100px;
+    /* Fixed width for alignment */
+    flex-shrink: 0;
+}
+
+/* Specific spacing adjustment for dashboard */
+.dashboard-section-spacer {
+    margin-top: 40px;
+    /* Increased gap */
+}
