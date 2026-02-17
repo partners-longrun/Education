@@ -28,14 +28,25 @@ async function init() {
   }
 
   if (savedToken) {
-    var result = await api('checkSession', {}, savedToken);
+    // [최적화] 통합 API 호출
+    var result = await api('getInitialData', {}, savedToken);
+
     if (result.success) {
       App.sessionToken = savedToken;
-      App.user = result.user;
-      App.isAdmin = result.user.role === '관리자' || result.user.role === '지사대표';
+      App.user = result.data.user;
+      App.isAdmin = result.data.user.role === '관리자' || result.data.user.role === '지사대표';
+      App.boards = result.data.boards || [];
+
+      // 게시판 목록 캐싱 (세션 스토리지)
+      sessionStorage.setItem('boardList', JSON.stringify(App.boards));
+
+      // 대시보드 데이터도 미리 로드되었으므로 저장 (선택적)
+      if (result.data.dashboard) {
+        App.initialDashboardData = result.data.dashboard;
+      }
 
       // 최초 로그인 체크
-      if (result.user.isFirstLogin) {
+      if (result.data.user.isFirstLogin) {
         showLogin(); // 로그인 화면 유지
         showChangePasswordModal(true); // 비밀번호 변경 모달 표시
       } else {
@@ -354,18 +365,29 @@ async function loadDashboard() {
   setPageTitle('대시보드');
   showLoading();
 
-  const result = await api('getDashboardData');
+  let data;
 
-  if (!result.success) {
-    showError(result.error);
-    return;
+  // [최적화] 초기 로딩 시 받아온 데이터가 있으면 그것을 사용
+  if (App.initialDashboardData) {
+    data = App.initialDashboardData;
+    App.initialDashboardData = null; // 한 번 사용 후 초기화 (다음 번엔 새로고침 위해)
+  } else {
+    // 평소대로 API 호출
+    const result = await api('getDashboardData');
+    if (!result.success) {
+      showError(result.error);
+      return;
+    }
+    data = result.data;
   }
 
-  const data = result.data;
   App.boards = data.boards;
 
   // 게시판 네비 업데이트
   updateBoardNav(data.boards);
+
+  // 게시판 목록 최신화 (캐시 업데이트)
+  sessionStorage.setItem('boardList', JSON.stringify(data.boards));
 
   // HTML 렌더링
   const container = document.getElementById('page-container');
@@ -407,6 +429,21 @@ async function loadDashboard() {
 }
 
 function updateBoardNav(boards) {
+  // 인자가 없으면 캐시 또는 앱 상태에서 가져옴
+  if (!boards) {
+    if (App.boards && App.boards.length > 0) {
+      boards = App.boards;
+    } else {
+      const cached = sessionStorage.getItem('boardList');
+      if (cached) {
+        boards = JSON.parse(cached);
+        App.boards = boards;
+      } else {
+        return; // 데이터 없음
+      }
+    }
+  }
+
   const navList = document.getElementById('board-nav-list');
   const icons = ['📚', '💼', '📊', '🎯', '📢', '🔖', '📌', '🗂️'];
 
@@ -432,14 +469,21 @@ async function loadBoard(boardId) {
   App.currentBoardId = boardId;
   showLoading();
 
-  // 게시판 정보
-  const boardResult = await api('getBoardById', { boardId });
-  if (!boardResult.success) {
-    showError(boardResult.error);
-    return;
-  }
+  // [최적화] 게시판 정보는 캐시에서 먼저 찾음
+  let board = App.boards.find(b => b.boardId === boardId);
 
-  setPageTitle(boardResult.data.boardName);
+  if (board) {
+    setPageTitle(board.boardName);
+  } else {
+    // 캐시에 없으면 API 호출 (드문 경우)
+    const boardResult = await api('getBoardById', { boardId });
+    if (!boardResult.success) {
+      showError(boardResult.error);
+      return;
+    }
+    board = boardResult.data;
+    setPageTitle(board.boardName);
+  }
 
   // 게시글 목록
   const postsResult = await api('getPosts', { boardId, page: 1, pageSize: 12 });
