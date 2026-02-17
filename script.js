@@ -835,19 +835,26 @@ async function loadPost(postId) {
   let cachedPost = null;
 
   // A. 대시보드 데이터 확인
-  const dashboardData = LocalCache.get('dashboard_data');
-  if (dashboardData && dashboardData.data) {
-    const recentVideos = dashboardData.data.recentVideos || [];
-    const recentFiles = dashboardData.data.recentFiles || [];
-    cachedPost = recentVideos.find(p => p.postId === postId) || recentFiles.find(p => p.postId === postId);
+  // [수정] 캐시 키 불일치 수정 ('dashboard_data' -> 'dashboard')
+  const dashboardData = LocalCache.get('dashboard');
+  if (dashboardData && dashboardData.recentVideos) { // dashboardData.data가 아니라 바로 객체일 수 있음 (구조 확인 필요하지만 일단 방어적 코드)
+    const recentVideos = dashboardData.recentVideos || [];
+    const recentFiles = dashboardData.recentFiles || [];
+    // [수정] ID 비교 시 타입 강제 변환 (String vs Number 이슈 방지)
+    cachedPost = recentVideos.find(p => String(p.postId) === String(postId)) ||
+      recentFiles.find(p => String(p.postId) === String(postId));
   }
+  // dashboardData구조가 {data: {...}} 인지, 바로 {...} 인지 확인 필요.
+  // loadDashboard에서 LocalCache.set('dashboard', result.data, 5) 하므로 result.data가 들어감.
+  // result.data 구조는 { recentVideos: [...], recentFiles: [...] } 임.
+  // 따라서 LocalCache.get('dashboard')는 { recentVideos: [...], recentFiles: [...] } 를 반환함.
 
   // B. 현재 게시판 목록 데이터 확인
   if (!cachedPost && App.currentBoardId) {
     const boardCacheKey = `posts_${App.currentBoardId}_page1`; // 1페이지만 확인 (대부분 여기서 클릭함)
     const boardData = LocalCache.get(boardCacheKey);
     if (boardData && boardData.data) {
-      cachedPost = boardData.data.find(p => p.postId === postId);
+      cachedPost = boardData.data.find(p => String(p.postId) === String(postId));
     }
   }
 
