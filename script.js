@@ -884,7 +884,14 @@ async function loadPost(postId) {
 // [신규] 게시글 상세 렌더링 함수 분리
 async function renderPostDetail(post) {
   App.currentPostId = post.postId;
-  setPageTitle(post.boardName || '게시판');
+
+  // [수정] 게시판 이름이 없으면 App.boards에서 찾아서 채움 (Dashboard 클릭 시 누락 방지)
+  let boardName = post.boardName;
+  if (!boardName && post.boardId && App.boards) {
+    const board = App.boards.find(b => b.boardId === post.boardId);
+    if (board) boardName = board.boardName;
+  }
+  setPageTitle(boardName || '게시판');
 
   // 댓글 로드 (캐시 사용 X, 항상 최신)
   // 단, 화면이 먼저 그려진 후 댓글이 로드될 수 있도록 비동기 처리
@@ -898,10 +905,14 @@ async function renderPostDetail(post) {
   }
 
   const container = document.getElementById('page-container');
+
+  // [안전장치] attachments가 null/undefined일 경우 빈 배열로 처리
+  const attachments = post.attachments || [];
+
   container.innerHTML = `
     <div class="post-container">
       <div style="margin-bottom: 20px;">
-        <button class="back-btn" onclick="navigateTo('board', {boardId:'${post.boardId}'})">← ${escapeHtml(post.boardName || '목록')}으로 돌아가기</button>
+        <button class="back-btn" onclick="navigateTo('board', {boardId:'${post.boardId}'})">← ${escapeHtml(boardName || '목록')}으로 돌아가기</button>
       </div>
 
       ${renderVideoPlayer(post)}
@@ -923,7 +934,7 @@ async function renderPostDetail(post) {
       <div class="post-header-card">
         <h1 class="post-detail-title">${escapeHtml(post.title)}</h1>
         <div class="post-meta">
-          <span class="post-meta-item">✍️ ${escapeHtml(post.writerName || post.createdBy)}</span>
+          <span class="post-meta-item">✍️ ${escapeHtml(post.writerName || post.createdBy || '작성자')}</span>
           <span class="post-meta-item">📅 ${formatDate(post.createdAt)}</span>
           <span class="post-meta-item">👁️ 조회 ${post.viewCount || 0}</span>
         </div>
@@ -936,11 +947,11 @@ async function renderPostDetail(post) {
         </div>
       ` : ''}
       
-      ${(post.attachments && post.attachments.length > 0) ? `
+      ${attachments.length > 0 ? `
         <div class="content-card">
-          <h3>📎 첨부파일 (${post.attachments.length})</h3>
+          <h3>📎 첨부파일 (${attachments.length})</h3>
           <div class="attachment-list">
-            ${post.attachments.map(att => renderAttachment(att)).join('')}
+            ${attachments.map(att => renderAttachment(att)).join('')}
           </div>
         </div>
       ` : ''}
