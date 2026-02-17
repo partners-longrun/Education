@@ -321,18 +321,20 @@ function showLoginError(message) {
 }
 
 // ========== [수정] 로그아웃 - 캐시 초기화 포함 ==========
+// ========== [수정] 로그아웃 - 즉시 UI 반영 (Optimistic UI) ==========
 async function handleLogout() {
-  await api('logout');
+  // 1. 즉시 로그인 화면으로 전환 (사용자 대기 시간 제거)
   App.sessionToken = null;
   App.user = null;
   localStorage.removeItem('sessionToken');
   sessionStorage.removeItem('sessionToken');
   sessionStorage.removeItem('currentNav');
-
-  // [추가] 로컬 캐시 초기화
   LocalCache.clear();
 
   showLogin();
+
+  // 2. 백그라운드에서 로그아웃 API 호출 (결과 기다리지 않음)
+  api('logout').catch(e => console.warn('Logout API failed (background)', e));
 }
 
 // ========== [수정] 앱 핸들러 설정 - debounce 검색 적용 ==========
@@ -492,8 +494,7 @@ function navigateTo(page, params = {}) {
 }
 
 // ========== 대시보드 ==========
-// ========== [수정] 대시보드 로딩 최적화 ==========
-// 기존 loadDashboard() 함수를 아래 코드로 교체하세요
+// ========== [수정] 대시보드 로딩 최적화 & 레이아웃 간소화 ==========
 
 async function loadDashboard() {
   console.time('loadDashboard'); // 성능 측정
@@ -502,15 +503,13 @@ async function loadDashboard() {
 
   const container = document.getElementById('page-container');
 
-  // [최적화] 로딩 스켈레톤 먼저 표시 (사용자 경험 개선)
+  // [최적화] 로딩 스켈레톤 (간소화된 버전)
   container.innerHTML = `
     <div class="dashboard-loading">
       <div class="skeleton-header"></div>
-      <div class="skeleton-stats">
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
+      <div class="skeleton-section">
+        <div class="skeleton-title"></div>
+        <div class="skeleton-items"></div>
       </div>
       <div class="skeleton-section">
         <div class="skeleton-title"></div>
@@ -531,13 +530,12 @@ async function loadDashboard() {
     // 캐시된 데이터로 즉시 렌더링
     renderDashboard(data);
 
-    // [최적화] 백그라운드에서 데이터 업데이트 (선택적)
+    // [최적화] 백그라운드에서 데이터 업데이트
     setTimeout(async () => {
       const result = await api('getDashboardData');
       if (result.success && App.currentPage === 'dashboard') {
         LocalCache.set('dashboard', result.data, 5); // 5분 캐싱
-        // 데이터가 변경되었으면 다시 렌더링 (선택적)
-        // renderDashboard(result.data);
+        renderDashboard(result.data); // 최신 데이터로 업데이트
       }
     }, 100);
   } else {
@@ -561,10 +559,10 @@ async function loadDashboard() {
     renderDashboard(data);
   }
 
-  console.timeEnd('loadDashboard'); // 성능 측정 종료
+  console.timeEnd('loadDashboard');
 }
 
-// [신규] 대시보드 렌더링 함수 (기존 loadDashboard의 렌더링 부분 분리)
+// [수정] 대시보드 렌더링 함수 - 간소화된 레이아웃 (텍스트 리스트)
 function renderDashboard(data) {
   App.boards = data.boards;
 
@@ -573,74 +571,60 @@ function renderDashboard(data) {
 
   // 게시판 목록 최신화
   sessionStorage.setItem('boardList', JSON.stringify(data.boards));
-  LocalCache.set('boards', data.boards, 30); // 로컬 캐시도 업데이트
+  LocalCache.set('boards', data.boards, 30);
 
   // HTML 렌더링
   const container = document.getElementById('page-container');
   container.innerHTML = `
     <!-- 환영 인사 -->
-    <div class="welcome-section">
+    <div class="welcome-section" style="margin-bottom: 30px;">
       <h1 class="welcome-title">👋 안녕하세요, ${escapeHtml(App.user.name)}님!</h1>
       <p class="welcome-subtitle">파트너스 교육관에 오신 것을 환영합니다.</p>
     </div>
     
-    <!-- 통계 카드 -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon">📹</div>
-        <div class="stat-value">${data.stats.totalVideos || 0}</div>
-        <div class="stat-label">교육 영상</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">📄</div>
-        <div class="stat-value">${data.stats.totalFiles || 0}</div>
-        <div class="stat-label">학습 자료</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">📝</div>
-        <div class="stat-value">${data.stats.totalPosts || 0}</div>
-        <div class="stat-label">전체 게시글</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">💬</div>
-        <div class="stat-value">${data.stats.monthlyComments || 0}</div>
-        <div class="stat-label">이번 달 댓글</div>
-      </div>
-    </div>
-
-    <!-- 최근 영상 -->
-    ${data.recentVideos && data.recentVideos.length > 0 ? `
-      <div class="content-section">
-        <div class="section-header">
-          <h2 class="section-title">📹 최근 영상</h2>
-        </div>
-        <div class="posts-grid">
-          ${data.recentVideos.map(post => renderPostCard(post)).join('')}
-        </div>
-      </div>
-    ` : ''}
-
-    <!-- 최근 자료 -->
-    ${data.recentFiles && data.recentFiles.length > 0 ? `
-      <div class="content-section">
-        <div class="section-header">
-          <h2 class="section-title">📄 최근 자료</h2>
-        </div>
-        <div class="posts-grid">
-          ${data.recentFiles.map(post => renderPostCard(post)).join('')}
-        </div>
-      </div>
-    ` : ''}
-
-    <!-- 게시판 목록 -->
-    <div class="content-section">
+    <!-- 최근 영상 (Simple List) -->
+    <section class="section">
       <div class="section-header">
-        <h2 class="section-title">📋 게시판</h2>
+        <h2 class="section-title">
+          <span class="section-title-icon">📺</span>
+          최근 영상
+        </h2>
       </div>
-      <div class="boards-grid">
-        ${renderBoardCards(data.boards)}
+      <div class="simple-list">
+        ${renderSimpleList(data.recentVideos, '등록된 영상이 없습니다.')}
       </div>
-    </div>
+    </section>
+    
+    <!-- 최근 자료 (Simple List) -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="section-title-icon">📁</span>
+          최근 자료
+        </h2>
+      </div>
+      <div class="simple-list">
+        ${renderSimpleList(data.recentFiles, '등록된 자료가 없습니다.')}
+      </div>
+    </section>
+  `;
+}
+
+// [신규] 심플 리스트 렌더링 헬퍼
+function renderSimpleList(items, emptyMessage) {
+  if (!items || items.length === 0) {
+    return `<div class="empty-state-text" style="padding: 10px 0;">${emptyMessage}</div>`;
+  }
+
+  return `
+    <ul class="simple-post-list">
+      ${items.map(item => `
+        <li class="simple-post-item" onclick="navigateTo('post', {postId:'${item.postId}'})">
+          <span class="simple-post-title">${escapeHtml(item.title)}</span>
+          <span class="simple-post-date">${formatDate(item.createdAt)}</span>
+        </li>
+      `).join('')}
+    </ul>
   `;
 }
 
@@ -688,35 +672,58 @@ function updateBoardNav(boards) {
 }
 
 // ========== 게시판 ==========
+// [수정] 게시판 로딩 최적화 (캐싱 적용)
 async function loadBoard(boardId) {
   App.currentBoardId = boardId;
   showLoading();
 
-  // [최적화] 게시판 정보는 캐시에서 먼저 찾음
+  // 1. 게시판 메타 정보 (캐시 우선)
   let board = App.boards.find(b => b.boardId === boardId);
-
   if (board) {
     setPageTitle(board.boardName);
+  }
+
+  // 2. 게시글 목록 캐시 키 생성
+  const cacheKey = `posts_${boardId}_page1`;
+  const cachedPosts = LocalCache.get(cacheKey);
+
+  // [최적화] 캐시된 게시글이 있는 경우 즉시 렌더링
+  if (cachedPosts) {
+    console.log('Using cached posts for board:', boardId);
+    renderBoardPosts(cachedPosts.data, cachedPosts.pagination);
+
+    // 백그라운드 업데이트 (선택적)
+    api('getPosts', { boardId, page: 1, pageSize: 12 }).then(result => {
+      if (result.success) {
+        LocalCache.set(cacheKey, result, 5); // 5분 캐시
+      }
+    });
   } else {
-    // 캐시에 없으면 API 호출 (드문 경우)
-    const boardResult = await api('getBoardById', { boardId });
-    if (!boardResult.success) {
-      showError(boardResult.error);
+    // 캐시 없으면 API 호출
+    const postsResult = await api('getPosts', { boardId, page: 1, pageSize: 12 });
+    if (!postsResult.success) {
+      showError(postsResult.error);
       return;
     }
-    board = boardResult.data;
-    setPageTitle(board.boardName);
+
+    // 캐시 저장
+    LocalCache.set(cacheKey, postsResult, 5);
+    renderBoardPosts(postsResult.data, postsResult.pagination);
   }
 
-  // 게시글 목록
-  const postsResult = await api('getPosts', { boardId, page: 1, pageSize: 12 });
-  if (!postsResult.success) {
-    showError(postsResult.error);
-    return;
+  // 게시판 보드 정보가 없었다면 API 호출로 가져오기 (드문 케이스)
+  if (!board) {
+    const boardResult = await api('getBoardById', { boardId });
+    if (boardResult.success) {
+      board = boardResult.data;
+      setPageTitle(board.boardName);
+    }
   }
+}
 
+// [신규] 게시판 포스트 렌더링 함수 분리
+function renderBoardPosts(posts, pagination) {
   const container = document.getElementById('page-container');
-  const posts = postsResult.data;
 
   if (posts.length === 0) {
     container.innerHTML = `
@@ -743,20 +750,15 @@ async function loadBoard(boardId) {
     <div class="video-grid">
       ${posts.map(post => renderPostCard(post)).join('')}
     </div>
-    ${renderPagination(postsResult.pagination, 'loadBoardPage')}
+    ${renderPagination(pagination, 'loadBoardPage')}
   `;
 }
 
 async function loadBoardPage(page) {
+  // 페이지 이동은 캐시하지 않음 (최신 데이터 중요)
   const postsResult = await api('getPosts', { boardId: App.currentBoardId, page, pageSize: 12 });
   if (postsResult.success) {
-    const container = document.getElementById('page-container');
-    container.innerHTML = `
-      <div class="video-grid">
-        ${postsResult.data.map(post => renderPostCard(post)).join('')}
-      </div>
-      ${renderPagination(postsResult.pagination, 'loadBoardPage')}
-    `;
+    renderBoardPosts(postsResult.data, postsResult.pagination);
   }
 }
 
@@ -1026,6 +1028,10 @@ async function saveBoard(boardId) {
   }
 
   if (result.success) {
+    // [추가] 캐시 무효화
+    LocalCache.remove('boards');
+    LocalCache.remove('dashboard');
+
     showToast(result.message, 'success');
     closeModal();
     loadAdminBoards();
@@ -1039,6 +1045,10 @@ async function deleteBoard(boardId) {
 
   const result = await api('deleteBoard', { boardId });
   if (result.success) {
+    // [추가] 캐시 무효화
+    LocalCache.remove('boards');
+    LocalCache.remove('dashboard');
+
     showToast(result.message, 'success');
     loadAdminBoards();
   } else {
@@ -1298,6 +1308,10 @@ async function savePost(postId) {
     }
 
     if (result.success) {
+      // [추가] 캐시 무효화
+      LocalCache.remove(`posts_${boardId}_page1`);
+      LocalCache.remove('dashboard');
+
       showToast(postId ? '게시글이 수정되었습니다.' : '게시되었습니다.', 'success');
       closeModal();
       if (App.currentPage === 'admin-posts') {
@@ -1323,6 +1337,10 @@ async function deletePost(postId) {
 
   const result = await api('deletePost', { postId });
   if (result.success) {
+    // [추가] 캐시 무효화
+    LocalCache.remove(`posts_${App.currentBoardId}_page1`);
+    LocalCache.remove('dashboard');
+
     showToast('게시글이 삭제되었습니다.', 'success');
     if (App.currentPage === 'admin-posts') {
       loadAdminPosts();
