@@ -900,6 +900,18 @@ async function renderPostDetail(post) {
   }
   setPageTitle(boardName || '게시판');
 
+  // [신규] 사이드바 네비게이션 싱크 맞추기 (대시보드에서 진입 시)
+  if (post.boardId) {
+    App.currentBoardId = post.boardId;
+    // 사이드바 활성 상태 업데이트
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.classList.remove('active');
+      if (item.dataset.boardId === post.boardId) {
+        item.classList.add('active');
+      }
+    });
+  }
+
   // 댓글 로드 (캐시 사용 X, 항상 최신)
   // 단, 화면이 먼저 그려진 후 댓글이 로드될 수 있도록 비동기 처리
   let comments = [];
