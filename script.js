@@ -1535,11 +1535,23 @@ function renderPostCard(post) {
 
 function renderVideoPlayer(post) {
   if (post.youtubeUrl) {
-    // YouTube support removed, but keeping this block empty just in case or removing content
+    // YouTube support removed
   }
+
   if (post.driveFileId) {
     if (post.driveFileType === 'video') {
-      return '<div class="video-player"><iframe src="https:' + '/' + '/drive.google.com/file/d/' + post.driveFileId + '/preview" allowfullscreen><' + '/iframe><' + '/div>';
+      // [수정] CSP (Content Security Policy) 오류 해결을 위해 iframe 대신 새 창 열기 버튼 제공
+      // Google Drive는 타 도메인에서의 iframe 임매딩을 엄격하게 제한함 (특히 비공개 파일)
+      return `
+        <div class="video-player-placeholder" style="background:#2c3e50; height:320px; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:12px; color:white; margin-bottom:20px;">
+          <div style="font-size:64px; margin-bottom:20px; opacity:0.8;">▶️</div>
+          <h3 style="margin:0 0 10px 0; font-weight:500;">영상 미리보기</h3>
+          <p style="margin:0 0 24px 0; color:#bdc3c7; font-size:14px;">보안 설정으로 인해 새 창에서 재생됩니다.</p>
+          <button class="btn btn-primary" onclick="window.open('https://drive.google.com/file/d/${post.driveFileId}/view', '_blank')" style="padding:10px 24px; font-size:16px;">
+            📽️ 영상 재생하기
+          </button>
+        </div>
+      `;
     }
   }
   return '';
