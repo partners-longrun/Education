@@ -808,7 +808,7 @@ function renderBoardPosts(posts, pagination) {
     ` : ''}
     <div class="simple-post-list" style="margin-top: 20px;">
       ${posts.map(post => `
-        <div class="simple-post-item" onclick="showPostDetail('${post.postId}')">
+        <div class="simple-post-item" onclick="navigateTo('post', {postId:'${post.postId}'})">
           <div class="simple-post-title">${escapeHtml(post.title)}</div>
           <div class="simple-post-date">${formatDate(post.createdAt)}</div>
         </div>
@@ -827,28 +827,83 @@ async function loadBoardPage(page) {
 }
 
 // ========== 게시글 상세 ==========
+// [수정] 게시글 로드 최적화 (Optimistic UI)
 async function loadPost(postId) {
-  App.currentPostId = postId;
   showLoading();
 
-  const result = await api('getPostById', { postId });
-  if (!result.success) {
-    showError(result.error);
-    return;
+  // 1. [최적화] 대시보드나 게시판 목록에서 이미 로드된 데이터가 있는지 확인
+  let cachedPost = null;
+
+  // A. 대시보드 데이터 확인
+  const dashboardData = LocalCache.get('dashboard_data');
+  if (dashboardData && dashboardData.data) {
+    const recentVideos = dashboardData.data.recentVideos || [];
+    const recentFiles = dashboardData.data.recentFiles || [];
+    cachedPost = recentVideos.find(p => p.postId === postId) || recentFiles.find(p => p.postId === postId);
   }
 
-  const post = result.data;
+  // B. 현재 게시판 목록 데이터 확인
+  if (!cachedPost && App.currentBoardId) {
+    const boardCacheKey = `posts_${App.currentBoardId}_page1`; // 1페이지만 확인 (대부분 여기서 클릭함)
+    const boardData = LocalCache.get(boardCacheKey);
+    if (boardData && boardData.data) {
+      cachedPost = boardData.data.find(p => p.postId === postId);
+    }
+  }
+
+  // 2. [최적화] 캐시 데이터가 있으면 즉시 렌더링 (사용자는 즉각적인 반응을 느낌)
+  if (cachedPost) {
+    console.log('Using cached post data for instant load:', postId);
+    await renderPostDetail(cachedPost); // Await here as renderPostDetail is now async
+    hideLoading(); // 로딩 즉시 해제
+  }
+
+  // 3. 서버에서 최신 데이터(댓글/조회수 등) 가져오기 (백그라운드 업데이트)
+  try {
+    const result = await api('getPostById', { postId });
+
+    if (result.success) {
+      // 캐시된 데이터와 비교하여 변경점이 있거나(조회수 등), 댓글이 필요한 경우 업데이트
+      // 여기서는 그냥 무조건 최신 데이터로 다시 그립니다. (사용자는 눈치채지 못함)
+      await renderPostDetail(result.data); // 댓글 포함 전체 렌더링
+      if (!cachedPost) hideLoading(); // 캐시 없었으면 이제 로딩 해제
+    } else {
+      if (!cachedPost) {
+        showError(result.error);
+        hideLoading();
+      }
+    }
+  } catch (e) {
+    if (!cachedPost) {
+      showError('게시글을 불러오는데 실패했습니다.');
+      hideLoading();
+    }
+  }
+}
+
+// [신규] 게시글 상세 렌더링 함수 분리
+async function renderPostDetail(post) {
+  App.currentPostId = post.postId;
   setPageTitle(post.boardName || '게시판');
 
-  // 댓글 로드
-  const commentsResult = await api('getComments', { postId });
-  const comments = commentsResult.success ? commentsResult.data : [];
+  // 댓글 로드 (캐시 사용 X, 항상 최신)
+  // 단, 화면이 먼저 그려진 후 댓글이 로드될 수 있도록 비동기 처리
+  let comments = [];
+  try {
+    // API call moved to inside render to allow initial paint if needed
+    const commentsResult = await api('getComments', { postId: post.postId });
+    comments = commentsResult.success ? commentsResult.data : [];
+  } catch (e) {
+    console.error("Failed to load comments", e);
+  }
 
   const container = document.getElementById('page-container');
   container.innerHTML = `
     <div class="post-container">
-      <button class="back-btn" onclick="navigateTo('board', {boardId:'${post.boardId}'})">← ${escapeHtml(post.boardName)}으로 돌아가기</button>
-      
+      <div style="margin-bottom: 20px;">
+        <button class="back-btn" onclick="navigateTo('board', {boardId:'${post.boardId}'})">← ${escapeHtml(post.boardName || '목록')}으로 돌아가기</button>
+      </div>
+
       ${renderVideoPlayer(post)}
       
       <!-- Main File Attachment (if not video and exists) -->
@@ -870,10 +925,8 @@ async function loadPost(postId) {
         <div class="post-meta">
           <span class="post-meta-item">✍️ ${escapeHtml(post.writerName || post.createdBy)}</span>
           <span class="post-meta-item">📅 ${formatDate(post.createdAt)}</span>
-          <span class="post-meta-item">👁️ 조회 ${post.viewCount}</span>
+          <span class="post-meta-item">👁️ 조회 ${post.viewCount || 0}</span>
         </div>
-        <!-- Line removed -->
-        <!-- Actions removed -->
       </div>
       
       ${post.content ? `
@@ -883,7 +936,7 @@ async function loadPost(postId) {
         </div>
       ` : ''}
       
-      ${post.attachments.length > 0 ? `
+      ${(post.attachments && post.attachments.length > 0) ? `
         <div class="content-card">
           <h3>📎 첨부파일 (${post.attachments.length})</h3>
           <div class="attachment-list">
@@ -894,15 +947,15 @@ async function loadPost(postId) {
       
       <div class="content-card">
         <div class="comments-header">
-          <h3 class="comments-title">💬 댓글 <span class="comments-count" id="comment-count">${commentsResult.total || 0}</span></h3>
+          <h3 class="comments-title">💬 댓글 <span class="comments-count" id="comment-count">${comments ? comments.length : 0}</span></h3>
         </div>
         
         <div class="comment-form">
           <div class="comment-avatar">${App.user.name.charAt(0)}</div>
           <div class="comment-input-wrapper">
-            <textarea class="comment-input" id="comment-input" rows="2" placeholder="댓글을 입력하세요..."></textarea>
+            <input type="text" class="comment-input" id="comment-input" placeholder="댓글을 입력하세요..." autocomplete="off">
             <div class="comment-submit-row">
-              <button class="comment-submit" onclick="submitComment('${postId}')">등록</button>
+              <button class="comment-submit" onclick="submitComment('${post.postId}')">등록</button>
             </div>
           </div>
         </div>
@@ -919,20 +972,11 @@ async function loadPost(postId) {
 // function toggleLike(postId) { ... }
 
 // ========== 댓글 ==========
-async function submitComment(postId, parentId = null) {
+async function submitComment(postId) {
   const input = document.getElementById('comment-input');
-  // 버튼 식별을 위해 parentId 유무에 따라 처리 (현재 구조상 대댓글 폼은 별도 생성됨. 이 함수의 수정 범위는 메인 댓글 폼 기준)
-  // 메인 댓글 버튼 ID: comment-submit-btn (새로 추가 필요)
-  // 대댓글은 showReplyForm에서 생성되므로 그쪽도 확인 필요.
-  // 현재 HTML 구조상 메인 댓글 버튼에 ID가 없음. onclick에서 this를 넘기거나 ID를 부여해야 함.
-  // 기존 렌더링 코드: <button class="comment-submit" onclick="submitComment('${postId}')">등록</button>
-  // 이를 수정: <button class="comment-submit" id="comment-submit-btn" onclick="submitComment('${postId}')">등록</button>
-  // 
-  // 하지만 렌더링 함수(loadPost)를 먼저 수정해야 함.
+  const btn = document.querySelector('.comment-submit'); // Simple selection since only one form usually
 
-  // 여기서는 버튼을 DOM 탐색으로 찾음 (더 안전한 방법: loadPost 수정)
-  // 메인 댓글 입력창 옆의 버튼 찾기
-  const btn = document.querySelector('.comment-submit-row .comment-submit');
+  if (!input) return;
 
   const content = input.value.trim();
 
