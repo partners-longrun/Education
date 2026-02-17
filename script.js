@@ -1597,16 +1597,19 @@ function renderVideoPlayer(post) {
 
   if (post.driveFileId) {
     if (post.driveFileType === 'video') {
-      // [수정] CSP (Content Security Policy) 오류 해결을 위해 iframe 대신 새 창 열기 버튼 제공
-      // Google Drive는 타 도메인에서의 iframe 임매딩을 엄격하게 제한함 (특히 비공개 파일)
+      // [수정] iframe 임베딩 방식으로 변경 (사용자 요청: 인라인 재생)
+      // 주의: '링크가 있는 모든 사용자에게 공개' 설정이 되어 있어야 함
+      console.log('Rendering inline video player for:', post.driveFileId);
       return `
-        <div class="video-player-placeholder" style="background:#2c3e50; height:320px; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:12px; color:white; margin-bottom:20px;">
-          <div style="font-size:64px; margin-bottom:20px; opacity:0.8;">▶️</div>
-          <h3 style="margin:0 0 10px 0; font-weight:500;">영상 미리보기</h3>
-          <p style="margin:0 0 24px 0; color:#bdc3c7; font-size:14px;">보안 설정으로 인해 새 창에서 재생됩니다.</p>
-          <button class="btn btn-primary" onclick="window.open('https://drive.google.com/file/d/${post.driveFileId}/view', '_blank')" style="padding:10px 24px; font-size:16px;">
-            📽️ 영상 재생하기
-          </button>
+        <div class="video-player">
+          <iframe 
+            src="https://drive.google.com/file/d/${post.driveFileId}/preview" 
+            width="100%" 
+            height="100%" 
+            frameborder="0" 
+            allow="autoplay; fullscreen" 
+            allowfullscreen>
+          </iframe>
         </div>
       `;
     }
