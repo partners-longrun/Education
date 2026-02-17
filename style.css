@@ -2262,16 +2262,32 @@ select {
         /* Reduce padding */
         gap: 10px;
         /* Reduce gap */
+        align-items: flex-start;
+        /* Align to top for multi-line titles */
     }
 
     .simple-post-title {
         font-size: 14px;
         /* Slightly smaller title */
+        white-space: normal;
+        /* Allow wrapping */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        /* Limit to 2 lines */
+        line-clamp: 2;
+        /* Standard property for compatibility */
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.4;
+        word-break: break-all;
+        /* Ensure long words break */
     }
 
     .simple-post-date {
         font-size: 12px;
         width: 70px;
         /* Reduced fixed width */
+        margin-top: 2px;
+        /* Align with first line of title */
     }
 }
