@@ -1,16 +1,103 @@
 /**
- * 파트너스 교육관 - 프론트엔드 JavaScript
+ * 파트너스 교육관 - 프론트엔드 JavaScript (최적화 버전)
+ * 
+ * [추가된 기능]
+ * - LocalCache: 로컬 스토리지 캐싱
+ * - debounce: 검색 입력 최적화
+ * - 성능 모니터링
  */
 
 // Google Apps Script Web App URL (배포 후 교체 필요)
 const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxrAxN2qYxI3mFpiER378bXJVB1FwH_mhnSI60vFDHSyIBv2FJFw-ufRnz984AvgSNisQ/exec';
+
+// ========== [신규] 로컬 캐싱 헬퍼 ==========
+const LocalCache = {
+  set: function (key, data, minutes = 30) {
+    const expiry = Date.now() + (minutes * 60 * 1000);
+    const cacheData = { data: data, expiry: expiry };
+    try {
+      localStorage.setItem('cache_' + key, JSON.stringify(cacheData));
+    } catch (e) {
+      console.warn('LocalStorage full, clearing old cache');
+      this.clearExpired();
+      try {
+        localStorage.setItem('cache_' + key, JSON.stringify(cacheData));
+      } catch (e2) {
+        console.error('Failed to cache:', e2);
+      }
+    }
+  },
+
+  get: function (key) {
+    try {
+      const cached = localStorage.getItem('cache_' + key);
+      if (!cached) return null;
+
+      const cacheData = JSON.parse(cached);
+
+      if (Date.now() > cacheData.expiry) {
+        localStorage.removeItem('cache_' + key);
+        return null;
+      }
+
+      return cacheData.data;
+    } catch (e) {
+      console.error('Cache read error:', e);
+      return null;
+    }
+  },
+
+  remove: function (key) {
+    localStorage.removeItem('cache_' + key);
+  },
+
+  clearExpired: function () {
+    const keys = Object.keys(localStorage);
+    const now = Date.now();
+
+    keys.forEach(key => {
+      if (key.startsWith('cache_')) {
+        try {
+          const cacheData = JSON.parse(localStorage.getItem(key));
+          if (cacheData.expiry && now > cacheData.expiry) {
+            localStorage.removeItem(key);
+          }
+        } catch (e) {
+          localStorage.removeItem(key);
+        }
+      }
+    });
+  },
+
+  clear: function () {
+    const keys = Object.keys(localStorage);
+    keys.forEach(key => {
+      if (key.startsWith('cache_')) {
+        localStorage.removeItem(key);
+      }
+    });
+  }
+};
+
+// ========== [신규] Debounce 헬퍼 ==========
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
 
 // ========== 전역 상태 ==========
 const App = {
   user: null,
   sessionToken: null,
   currentPage: 'dashboard',
-  currentBoardId: null, // 게시글 상세 진입 시 유지를 위해 필요
+  currentBoardId: null,
   currentPostId: null,
   boards: [],
   isAdmin: false,
@@ -20,7 +107,13 @@ const App = {
 // ========== 초기화 ==========
 document.addEventListener('DOMContentLoaded', init);
 
+// [수정] init() 함수 - LocalCache 활용
 async function init() {
+  console.time('App Init'); // 성능 측정
+
+  // 만료된 캐시 정리
+  LocalCache.clearExpired();
+
   // 저장된 세션 확인
   var savedToken = localStorage.getItem('sessionToken');
   if (!savedToken) {
@@ -28,41 +121,49 @@ async function init() {
   }
 
   if (savedToken) {
-    // [최적화] 통합 API 호출
+    // [최적화] 게시판 목록 로컬 캐시 확인
+    const cachedBoards = LocalCache.get('boards');
+
     var result = await api('getInitialData', {}, savedToken);
 
     if (result.success) {
       App.sessionToken = savedToken;
       App.user = result.data.user;
       App.isAdmin = result.data.user.role === '관리자' || result.data.user.role === '지사대표';
-      App.boards = result.data.boards || [];
 
-      // 게시판 목록 캐싱 (세션 스토리지)
-      sessionStorage.setItem('boardList', JSON.stringify(App.boards));
-
-      // 대시보드 데이터도 미리 로드되었으므로 저장 (선택적)
-      if (result.data.dashboard) {
-        App.initialDashboardData = result.data.dashboard;
+      // [최적화] 캐시된 게시판이 있으면 즉시 사용
+      if (cachedBoards && cachedBoards.length > 0) {
+        App.boards = cachedBoards;
+        console.log('Using cached boards');
+      } else {
+        App.boards = result.data.boards || [];
+        LocalCache.set('boards', App.boards, 30); // 30분 캐싱
       }
+
+      // 세션 스토리지에도 저장 (호환성)
+      sessionStorage.setItem('boardList', JSON.stringify(App.boards));
 
       // 최초 로그인 체크
       if (result.data.user.isFirstLogin) {
-        showLogin(); // 로그인 화면 유지
-        showChangePasswordModal(true); // 비밀번호 변경 모달 표시
+        showLogin();
+        showChangePasswordModal(true);
       } else {
         showApp();
       }
     } else {
       localStorage.removeItem('sessionToken');
       sessionStorage.removeItem('sessionToken');
+      LocalCache.clear(); // 캐시도 초기화
       showLogin();
     }
   } else {
     showLogin();
   }
+
+  console.timeEnd('App Init'); // 성능 측정 종료
 }
 
-// ========== API 호출 ==========
+// ========== API 호출 (기존 유지) ==========
 function api(action, params = {}, sessionToken = null) {
   return new Promise((resolve) => {
     const token = sessionToken || App.sessionToken;
@@ -74,15 +175,11 @@ function api(action, params = {}, sessionToken = null) {
 
     if (API_BASE_URL === 'YOUR_GAS_WEB_APP_URL') {
       console.warn('API_BASE_URL이 설정되지 않았습니다. script.js 맨 위의 URL을 설정해주세요.');
-      // 로컬 테스트용 더미 응답 (필요시)
-      // resolve({ success: false, error: 'API_BASE_URL 미설정' });
-      // return;
     }
 
     fetch(API_BASE_URL, {
       method: 'POST',
       headers: {
-        // CORS Preflight 방지를 위해 text/plain 사용
         'Content-Type': 'text/plain;charset=utf-8',
       },
       body: JSON.stringify(payload)
@@ -125,6 +222,11 @@ function showApp() {
   updateUserProfile();
   setupAppHandlers();
 
+  // [최적화] 대시보드 로딩 전, 이미 있는 게시판 목록(Simple)으로 사이드바 즉시 렌더링
+  if (App.boards && App.boards.length > 0) {
+    updateBoardNav(App.boards);
+  }
+
   // 뒤로가기 방지: 히스토리 항목 추가
   history.pushState({ app: true }, '', '');
   window.onpopstate = function (e) {
@@ -133,8 +235,6 @@ function showApp() {
       history.pushState({ app: true }, '', '');
     }
   };
-
-
 
   // 저장된 페이지 복원 (새로고침 대응)
   var savedNav = sessionStorage.getItem('currentNav');
@@ -220,7 +320,7 @@ function showLoginError(message) {
   errorDiv.style.display = 'block';
 }
 
-// ========== 로그아웃 ==========
+// ========== [수정] 로그아웃 - 캐시 초기화 포함 ==========
 async function handleLogout() {
   await api('logout');
   App.sessionToken = null;
@@ -228,10 +328,14 @@ async function handleLogout() {
   localStorage.removeItem('sessionToken');
   sessionStorage.removeItem('sessionToken');
   sessionStorage.removeItem('currentNav');
+
+  // [추가] 로컬 캐시 초기화
+  LocalCache.clear();
+
   showLogin();
 }
 
-// ========== 앱 핸들러 설정 ==========
+// ========== [수정] 앱 핸들러 설정 - debounce 검색 적용 ==========
 function setupAppHandlers() {
   // 로그아웃
   document.getElementById('logout-btn').onclick = handleLogout;
@@ -239,8 +343,19 @@ function setupAppHandlers() {
   // 메뉴 토글
   document.getElementById('menu-toggle').onclick = toggleSidebar;
 
-  // 검색
-  document.getElementById('search-input').onkeypress = function (e) {
+  // [수정] 검색 - debounce 적용
+  const searchInput = document.getElementById('search-input');
+  const debouncedSearch = debounce(function (value) {
+    if (value && value.trim().length >= 2) {
+      handleSearch(value);
+    }
+  }, 300); // 300ms 대기
+
+  searchInput.oninput = function () {
+    debouncedSearch(this.value);
+  };
+
+  searchInput.onkeypress = function (e) {
     if (e.key === 'Enter') {
       handleSearch(this.value);
     }
@@ -257,6 +372,22 @@ function setupAppHandlers() {
   // 관리자 메뉴 표시
   if (App.isAdmin) {
     document.getElementById('admin-nav').style.display = 'block';
+  }
+}
+
+// ========== [신규] 검색 로딩 표시 ==========
+function showSearchLoading() {
+  // 검색 결과 영역에 로딩 표시
+  const container = document.getElementById('page-container');
+  if (container) {
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'search-loading';
+    loadingDiv.innerHTML = '<div class="spinner"></div> 검색 중...';
+    // 기존 검색 결과가 있으면 교체, 없으면 추가
+    const existing = container.querySelector('.search-loading');
+    if (existing) {
+      existing.replaceWith(loadingDiv);
+    }
   }
 }
 
@@ -361,33 +492,88 @@ function navigateTo(page, params = {}) {
 }
 
 // ========== 대시보드 ==========
+// ========== [수정] 대시보드 로딩 최적화 ==========
+// 기존 loadDashboard() 함수를 아래 코드로 교체하세요
+
 async function loadDashboard() {
+  console.time('loadDashboard'); // 성능 측정
+
   setPageTitle('대시보드');
-  showLoading();
+
+  const container = document.getElementById('page-container');
+
+  // [최적화] 로딩 스켈레톤 먼저 표시 (사용자 경험 개선)
+  container.innerHTML = `
+    <div class="dashboard-loading">
+      <div class="skeleton-header"></div>
+      <div class="skeleton-stats">
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+      </div>
+      <div class="skeleton-section">
+        <div class="skeleton-title"></div>
+        <div class="skeleton-items"></div>
+      </div>
+    </div>
+  `;
 
   let data;
 
-  // [최적화] 초기 로딩 시 받아온 데이터가 있으면 그것을 사용
-  if (App.initialDashboardData) {
-    data = App.initialDashboardData;
-    App.initialDashboardData = null; // 한 번 사용 후 초기화 (다음 번엔 새로고침 위해)
+  // [최적화] 로컬 캐시 확인
+  const cachedDashboard = LocalCache.get('dashboard');
+
+  if (cachedDashboard) {
+    console.log('Using cached dashboard');
+    data = cachedDashboard;
+
+    // 캐시된 데이터로 즉시 렌더링
+    renderDashboard(data);
+
+    // [최적화] 백그라운드에서 데이터 업데이트 (선택적)
+    setTimeout(async () => {
+      const result = await api('getDashboardData');
+      if (result.success && App.currentPage === 'dashboard') {
+        LocalCache.set('dashboard', result.data, 5); // 5분 캐싱
+        // 데이터가 변경되었으면 다시 렌더링 (선택적)
+        // renderDashboard(result.data);
+      }
+    }, 100);
   } else {
-    // 평소대로 API 호출
-    const result = await api('getDashboardData');
-    if (!result.success) {
-      showError(result.error);
-      return;
+    // [최적화] 초기 로딩 시 받아온 데이터가 있으면 그것을 사용
+    if (App.initialDashboardData) {
+      data = App.initialDashboardData;
+      App.initialDashboardData = null;
+      LocalCache.set('dashboard', data, 5);
+    } else {
+      // 평소대로 API 호출
+      const result = await api('getDashboardData');
+      if (!result.success) {
+        showError(result.error);
+        console.timeEnd('loadDashboard');
+        return;
+      }
+      data = result.data;
+      LocalCache.set('dashboard', data, 5); // 5분 캐싱
     }
-    data = result.data;
+
+    renderDashboard(data);
   }
 
+  console.timeEnd('loadDashboard'); // 성능 측정 종료
+}
+
+// [신규] 대시보드 렌더링 함수 (기존 loadDashboard의 렌더링 부분 분리)
+function renderDashboard(data) {
   App.boards = data.boards;
 
   // 게시판 네비 업데이트
   updateBoardNav(data.boards);
 
-  // 게시판 목록 최신화 (캐시 업데이트)
+  // 게시판 목록 최신화
   sessionStorage.setItem('boardList', JSON.stringify(data.boards));
+  LocalCache.set('boards', data.boards, 30); // 로컬 캐시도 업데이트
 
   // HTML 렌더링
   const container = document.getElementById('page-container');
@@ -398,33 +584,63 @@ async function loadDashboard() {
       <p class="welcome-subtitle">파트너스 교육관에 오신 것을 환영합니다.</p>
     </div>
     
-    <!-- 최근 영상 -->
-    <section class="section">
-      <div class="section-header">
-        <h2 class="section-title">
-          <span class="section-title-icon">📺</span>
-          최근 영상
-        </h2>
+    <!-- 통계 카드 -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📹</div>
+        <div class="stat-value">${data.stats.totalVideos || 0}</div>
+        <div class="stat-label">교육 영상</div>
       </div>
-      <div class="video-grid" id="recent-videos">
-        ${renderVideoCards(data.recentVideos)}
+      <div class="stat-card">
+        <div class="stat-icon">📄</div>
+        <div class="stat-value">${data.stats.totalFiles || 0}</div>
+        <div class="stat-label">학습 자료</div>
       </div>
-    </section>
-    
-    <!-- 최근 자료 -->
-    <section class="section">
-      <div class="section-header">
-        <h2 class="section-title">
-          <span class="section-title-icon">📁</span>
-          최근 자료
-        </h2>
+      <div class="stat-card">
+        <div class="stat-icon">📝</div>
+        <div class="stat-value">${data.stats.totalPosts || 0}</div>
+        <div class="stat-label">전체 게시글</div>
       </div>
-      <div class="file-grid" id="recent-files">
-        ${renderFileCards(data.recentFiles)}
+      <div class="stat-card">
+        <div class="stat-icon">💬</div>
+        <div class="stat-value">${data.stats.monthlyComments || 0}</div>
+        <div class="stat-label">이번 달 댓글</div>
       </div>
-    </section>
-    
+    </div>
 
+    <!-- 최근 영상 -->
+    ${data.recentVideos && data.recentVideos.length > 0 ? `
+      <div class="content-section">
+        <div class="section-header">
+          <h2 class="section-title">📹 최근 영상</h2>
+        </div>
+        <div class="posts-grid">
+          ${data.recentVideos.map(post => renderPostCard(post)).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- 최근 자료 -->
+    ${data.recentFiles && data.recentFiles.length > 0 ? `
+      <div class="content-section">
+        <div class="section-header">
+          <h2 class="section-title">📄 최근 자료</h2>
+        </div>
+        <div class="posts-grid">
+          ${data.recentFiles.map(post => renderPostCard(post)).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- 게시판 목록 -->
+    <div class="content-section">
+      <div class="section-header">
+        <h2 class="section-title">📋 게시판</h2>
+      </div>
+      <div class="boards-grid">
+        ${renderBoardCards(data.boards)}
+      </div>
+    </div>
   `;
 }
 
@@ -447,13 +663,20 @@ function updateBoardNav(boards) {
   const navList = document.getElementById('board-nav-list');
   const icons = ['📚', '💼', '📊', '🎯', '📢', '🔖', '📌', '🗂️'];
 
-  navList.innerHTML = boards.map((board, i) => `
+  navList.innerHTML = boards.map((board, i) => {
+    // [최적화] 초기 로딩 시에는 count가 없을 수 있음
+    const countDisplay = (board.postCount !== undefined && board.postCount !== null)
+      ? `<span class="badge">${board.postCount}</span>`
+      : '';
+
+    return `
     <a href="#" class="nav-item" data-page="board" data-board-id="${board.boardId}">
       <span class="nav-item-icon">${icons[i % icons.length]}</span>
       ${escapeHtml(board.boardName)}
-      <span class="badge">${board.postCount}</span>
+      ${countDisplay}
     </a>
-  `).join('');
+  `;
+  }).join('');
 
   // 클릭 이벤트 재설정
   navList.querySelectorAll('.nav-item').forEach(item => {
@@ -1590,3 +1813,56 @@ function handleFabClick() {
     loadDashboard();
   }
 }
+
+// ========== [신규] 헬퍼 함수들 ==========
+
+function getContentTypeLabel(type) {
+  const labels = {
+    'video': '영상',
+    'file': '자료',
+    'mixed': '게시글'
+  };
+  return labels[type] || '게시글';
+}
+
+function getBoardIcon(boardName) {
+  const icons = {
+    '상품 교육': '🎯',
+    '영업 스킬': '💼',
+    '신입 교육': '🎓',
+    '경영 전략': '📊',
+    '시스템 활용': '🔧',
+    '우수 사례': '💡'
+  };
+  return icons[boardName] || '📋';
+}
+
+// ========== [신규] 성능 모니터링 ==========
+function measurePerformance() {
+  if (window.performance && window.performance.timing) {
+    const perfData = window.performance.timing;
+    const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
+    const connectTime = perfData.responseEnd - perfData.requestStart;
+    const renderTime = perfData.domComplete - perfData.domLoading;
+
+    console.log('=== Performance Metrics ===');
+    console.log('Page Load Time:', pageLoadTime, 'ms');
+    console.log('Connect Time:', connectTime, 'ms');
+    console.log('Render Time:', renderTime, 'ms');
+    console.log('==========================');
+  }
+}
+
+// 페이지 로드 완료 시 성능 측정
+window.addEventListener('load', function () {
+  setTimeout(measurePerformance, 0);
+});
+
+// ========== [신규] 글로벌 에러 핸들러 ==========
+window.addEventListener('error', function (e) {
+  console.error('Global error:', e.error);
+});
+
+window.addEventListener('unhandledrejection', function (e) {
+  console.error('Unhandled promise rejection:', e.reason);
+});
