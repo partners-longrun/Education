@@ -572,7 +572,8 @@ async function loadDashboard() {
   let data;
 
   // [최적화] 로컬 캐시 확인
-  const cachedDashboard = LocalCache.get('dashboard');
+  // [강제 캐시 갱신] dashboard -> dashboard_v2
+  const cachedDashboard = LocalCache.get('dashboard_v2');
 
   if (cachedDashboard) {
     console.log('Using cached dashboard');
@@ -585,7 +586,7 @@ async function loadDashboard() {
     setTimeout(async () => {
       const result = await api('getDashboardData');
       if (result.success && App.currentPage === 'dashboard') {
-        LocalCache.set('dashboard', result.data, 5); // 5분 캐싱
+        LocalCache.set('dashboard_v2', result.data, 5); // 5분 캐싱
         renderDashboard(result.data); // 최신 데이터로 업데이트
       }
     }, 100);
@@ -594,7 +595,7 @@ async function loadDashboard() {
     if (App.initialDashboardData) {
       data = App.initialDashboardData;
       App.initialDashboardData = null;
-      LocalCache.set('dashboard', data, 5);
+      LocalCache.set('dashboard_v2', data, 5);
     } else {
       // 평소대로 API 호출
       const result = await api('getDashboardData');
@@ -605,7 +606,7 @@ async function loadDashboard() {
         return;
       }
       data = result.data;
-      LocalCache.set('dashboard', data, 5); // 5분 캐싱
+      LocalCache.set('dashboard_v2', data, 5); // 5분 캐싱
     }
 
     renderDashboard(data);
@@ -890,6 +891,14 @@ async function loadPost(postId) {
 
 // [신규] 게시글 상세 렌더링 함수 분리
 async function renderPostDetail(post) {
+  console.log('[Debug] renderPostDetail called for:', post);
+  if (post.attachments) {
+    console.log('[Debug] Attachments data:', post.attachments);
+    console.log('[Debug] Attachments length:', post.attachments.length);
+  } else {
+    console.log('[Debug] No attachments field in post object');
+  }
+
   App.currentPostId = post.postId;
 
   // [수정] 게시판 이름이 없으면 App.boards에서 찾아서 채움 (Dashboard 클릭 시 누락 방지)
