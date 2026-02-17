@@ -160,6 +160,9 @@ async function init() {
     showLogin();
   }
 
+  // [신규] 앱 초기화 완료 후 로딩 오버레이 제거 (혹시 남아있다면)
+  hideDashboardLoading();
+
   console.timeEnd('App Init'); // 성능 측정 종료
 }
 
@@ -206,6 +209,9 @@ function hideAllScreens() {
   const sidebarOverlay = document.getElementById('sidebar-overlay');
   if (sidebarOverlay) sidebarOverlay.remove();
 
+  // [신규] 대시보드 로딩 오버레이 숨김 (화면 전환 시 안전장치)
+  // hideDashboardLoading(); // 주석 처리: 명시적으로 닫을 때만 닫히도록 변경
+
   // 모달 정리
   document.getElementById('modal-container').innerHTML = '';
 }
@@ -243,12 +249,15 @@ function showApp() {
       var navData = JSON.parse(savedNav);
       navigateTo(navData.page, navData.params || {});
     } catch (e) {
+      showDashboardLoading(); // [신규] 대시보드 로드 시작 시 로딩 표시
       loadDashboard();
     }
   } else {
+    showDashboardLoading(); // [신규] 대시보드 로드 시작 시 로딩 표시
     loadDashboard();
   }
 }
+
 
 // ========== 로그인 ==========
 function setupLoginHandlers() {
@@ -277,6 +286,10 @@ async function handleLogin(e) {
   loginBtn.querySelector('.btn-loading').style.display = 'inline';
   errorDiv.style.display = 'none';
 
+  // [신규] 대시보드 로딩 오버레이 미리 표시 (로그인 성공 시 자연스러운 전환을 위해)
+  // 투명하게 시작해서 로그인 성공 시 나타나게 함, 실패하면 숨김
+  // showDashboardLoading(); 
+
   try {
     const result = await api('login', { employeeId, password });
 
@@ -292,8 +305,12 @@ async function handleLogin(e) {
         sessionStorage.setItem('sessionToken', result.sessionToken);
       }
 
+      // [신규] 로그인 성공 직후 로딩 오버레이 표시 (블랭크 페이지 방지)
+      showDashboardLoading();
+
       // 최초 로그인 체크
       if (result.user.isFirstLogin) {
+        hideDashboardLoading(); // 비밀번호 변경 모달은 로딩 끔
         showChangePasswordModal(true);
       } else {
         showApp();
@@ -390,6 +407,39 @@ function showSearchLoading() {
     if (existing) {
       existing.replaceWith(loadingDiv);
     }
+  }
+}
+
+// ========== [신규] 대시보드 로딩 오버레이 관리 ==========
+function showDashboardLoading() {
+  let overlay = document.getElementById('dashboard-loading-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'dashboard-loading-overlay';
+    overlay.className = 'dashboard-loading-overlay';
+    overlay.innerHTML = `
+      <div class="dashboard-loading-spinner"></div>
+      <div class="dashboard-loading-text">파트너스 교육관 데이터를 불러오는 중...</div>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  // 약간의 딜레이 후 표시 (DOM 렌더링 확보)
+  requestAnimationFrame(() => {
+    overlay.classList.add('visible');
+  });
+}
+
+function hideDashboardLoading() {
+  const overlay = document.getElementById('dashboard-loading-overlay');
+  if (overlay) {
+    overlay.classList.remove('visible');
+    // 애니메이션 종료 후 제거하지 않고 숨기기만 함 (재사용)
+    setTimeout(() => {
+      if (!overlay.classList.contains('visible')) {
+        // overlay.remove(); // 제거하지 않고 유지
+      }
+    }, 300);
   }
 }
 
@@ -549,6 +599,7 @@ async function loadDashboard() {
       const result = await api('getDashboardData');
       if (!result.success) {
         showError(result.error);
+        hideDashboardLoading(); // [신규] 에러 시 로딩 숨김
         console.timeEnd('loadDashboard');
         return;
       }
@@ -559,10 +610,16 @@ async function loadDashboard() {
     renderDashboard(data);
   }
 
+  // [신규] 대시보드 렌더링 완료 후 로딩 오버레이 숨김
+  // 약간의 딜레이를 주어 UI가 완전히 그려진 후 걷어냄
+  setTimeout(() => {
+    hideDashboardLoading();
+  }, 300);
+
   console.timeEnd('loadDashboard');
 }
 
-// [수정] 대시보드 렌더링 함수 - 간소화된 레이아웃 (텍스트 리스트)
+// [수정] 대시보드 렌더링 함수 - 간소화된 레이아웃 & UI 개선
 function renderDashboard(data) {
   App.boards = data.boards;
 
@@ -576,13 +633,13 @@ function renderDashboard(data) {
   // HTML 렌더링
   const container = document.getElementById('page-container');
   container.innerHTML = `
-    <!-- 환영 인사 -->
+    <!-- 환영 인사 (아이콘 위치 변경) -->
     <div class="welcome-section" style="margin-bottom: 30px;">
-      <h1 class="welcome-title">👋 안녕하세요, ${escapeHtml(App.user.name)}님!</h1>
+      <h1 class="welcome-title">안녕하세요, ${escapeHtml(App.user.name)}님 👋</h1>
       <p class="welcome-subtitle">파트너스 교육관에 오신 것을 환영합니다.</p>
     </div>
     
-    <!-- 최근 영상 (Simple List) -->
+    <!-- 최근 영상 (Simple List & Indented) -->
     <section class="section">
       <div class="section-header">
         <h2 class="section-title">
@@ -595,8 +652,8 @@ function renderDashboard(data) {
       </div>
     </section>
     
-    <!-- 최근 자료 (Simple List) -->
-    <section class="section">
+    <!-- 최근 자료 (Simple List & Indented & Spacing Added) -->
+    <section class="section dashboard-section-spacer">
       <div class="section-header">
         <h2 class="section-title">
           <span class="section-title-icon">📁</span>
