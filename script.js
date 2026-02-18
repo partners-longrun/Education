@@ -867,11 +867,12 @@ async function loadPost(postId) {
     }
   }
 
-  // 2. [최적화] 캐시 데이터가 있으면 즉시 렌더링 (사용자는 즉각적인 반응을 느낌)
-  if (cachedPost) {
+  // 2. [최적화] 캐시 데이터가 있고, 첨부파일 정보도 있으면 즉시 렌더링
+  //    (캐시에 attachments가 없으면 서버 응답을 기다려서 한 번에 보여줌)
+  if (cachedPost && cachedPost.attachments) {
     console.log('Using cached post data for instant load:', postId);
-    await renderPostDetail(cachedPost); // Await here as renderPostDetail is now async
-    hideLoading(); // 로딩 즉시 해제
+    await renderPostDetail(cachedPost);
+    hideLoading();
   }
 
   // 3. 서버에서 최신 데이터(댓글/조회수 등) 가져오기 (백그라운드 업데이트)
