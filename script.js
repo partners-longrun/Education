@@ -551,6 +551,7 @@ async function loadDashboard() {
   console.time('loadDashboard'); // 성능 측정
 
   setPageTitle('대시보드');
+  setBreadcrumb([]);
 
   const container = document.getElementById('page-container');
 
@@ -679,7 +680,12 @@ function renderSimpleList(items, emptyMessage) {
       ${items.map(item => `
         <li class="simple-post-item" onclick="navigateTo('post', {postId:'${item.postId}'})">
           <span class="simple-post-title">${escapeHtml(item.title)}</span>
-          <span class="simple-post-date">${formatDate(item.createdAt)}</span>
+          <div class="simple-post-meta">
+            <span>${escapeHtml(item.writerName || '')}</span>
+            <span>${formatDate(item.createdAt)}</span>
+            <span>조회 ${item.viewCount || 0}</span>
+            <span>댓글 ${item.commentCount || 0}</span>
+          </div>
         </li>
       `).join('')}
     </ul>
@@ -739,6 +745,7 @@ async function loadBoard(boardId) {
   let board = App.boards.find(b => b.boardId === boardId);
   if (board) {
     setPageTitle(board.boardName);
+    setBreadcrumb([{ label: '대시보드', page: 'dashboard' }]);
   }
 
   // 2. 게시글 목록 캐시 키 생성
@@ -775,6 +782,7 @@ async function loadBoard(boardId) {
     if (boardResult.success) {
       board = boardResult.data;
       setPageTitle(board.boardName);
+      setBreadcrumb([{ label: '대시보드', page: 'dashboard' }]);
     }
   }
 }
@@ -810,7 +818,12 @@ function renderBoardPosts(posts, pagination) {
       ${posts.map(post => `
         <div class="simple-post-item" onclick="navigateTo('post', {postId:'${post.postId}'})">
           <div class="simple-post-title">${escapeHtml(post.title)}</div>
-          <div class="simple-post-date">${formatDate(post.createdAt)}</div>
+          <div class="simple-post-meta">
+            <span>${escapeHtml(post.writerName || '')}</span>
+            <span>${formatDate(post.createdAt)}</span>
+            <span>조회 ${post.viewCount || 0}</span>
+            <span>댓글 ${post.commentCount || 0}</span>
+          </div>
         </div>
       `).join('')}
     </div>
@@ -899,6 +912,10 @@ async function renderPostDetail(post) {
     if (board) boardName = board.boardName;
   }
   setPageTitle(boardName || '게시판');
+  setBreadcrumb([
+    { label: '대시보드', page: 'dashboard' },
+    { label: boardName || '게시판', page: 'board', params: { boardId: post.boardId } }
+  ]);
 
   // [신규] 사이드바 네비게이션 싱크 맞추기 (대시보드에서 진입 시)
   if (post.boardId) {
@@ -1774,6 +1791,33 @@ function renderPagination(pagination, functionName) {
 // ========== 유틸리티 ==========
 function setPageTitle(title) {
   document.getElementById('page-title').textContent = title;
+}
+
+function setBreadcrumb(items) {
+  const bc = document.getElementById('breadcrumb');
+  if (!bc) return;
+
+  if (!items || items.length === 0) {
+    bc.classList.remove('visible');
+    bc.innerHTML = '';
+    return;
+  }
+
+  let html = '';
+  items.forEach(function (item, index) {
+    if (index > 0) {
+      html += '<span class="breadcrumb-separator">/</span>';
+    }
+    if (item.page) {
+      const params = item.params ? JSON.stringify(item.params).replace(/"/g, "'") : '{}';
+      html += '<a href="#" onclick="event.preventDefault();navigateTo(\'' + item.page + '\',' + params + ')">' + escapeHtml(item.label) + '</a>';
+    } else {
+      html += '<span>' + escapeHtml(item.label) + '</span>';
+    }
+  });
+
+  bc.innerHTML = html;
+  bc.classList.add('visible');
 }
 
 function showLoading() {
