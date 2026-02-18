@@ -947,9 +947,6 @@ async function renderPostDetail(post) {
 
   container.innerHTML = `
     <div class="post-container">
-      <div style="margin-bottom: 20px;">
-        <button class="back-btn" onclick="navigateTo('board', {boardId:'${post.boardId}'})">← ${escapeHtml(boardName || '목록')}으로 돌아가기</button>
-      </div>
 
       ${renderVideoPlayer(post)}
       
