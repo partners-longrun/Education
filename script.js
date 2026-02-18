@@ -681,7 +681,6 @@ function renderSimpleList(items, emptyMessage) {
         <li class="simple-post-item" onclick="navigateTo('post', {postId:'${item.postId}'})">
           <span class="simple-post-title">${escapeHtml(item.title)}</span>
           <div class="simple-post-meta">
-            <span>${escapeHtml(item.writerName || '')}</span>
             <span>${formatDate(item.createdAt)}</span>
             <span>조회 ${item.viewCount || 0}</span>
             <span>댓글 ${item.commentCount || 0}</span>
@@ -815,7 +814,6 @@ function renderBoardPosts(posts, pagination) {
         <div class="simple-post-item" onclick="navigateTo('post', {postId:'${post.postId}'})">
           <div class="simple-post-title">${escapeHtml(post.title)}</div>
           <div class="simple-post-meta">
-            <span>${escapeHtml(post.writerName || '')}</span>
             <span>${formatDate(post.createdAt)}</span>
             <span>조회 ${post.viewCount || 0}</span>
             <span>댓글 ${post.commentCount || 0}</span>
@@ -963,7 +961,6 @@ async function renderPostDetail(post) {
       <div class="post-header-card">
         <h1 class="post-detail-title">${escapeHtml(post.title)}</h1>
         <div class="post-meta">
-          <span class="post-meta-item">✍️ ${escapeHtml(post.writerName || post.createdBy || '작성자')}</span>
           <span class="post-meta-item">📅 ${formatDate(post.createdAt)}</span>
           <span class="post-meta-item">👁️ 조회 ${post.viewCount || 0}</span>
         </div>
@@ -978,7 +975,7 @@ async function renderPostDetail(post) {
       
       ${attachments.length > 0 ? `
         <div class="content-card">
-          <h3>📎 첨부파일 (${attachments.length})</h3>
+          <h3>📎 첨부파일</h3>
           <div class="attachment-list">
             ${attachments.map(att => renderAttachment(att)).join('')}
           </div>
@@ -991,7 +988,6 @@ async function renderPostDetail(post) {
         </div>
         
         <div class="comment-form">
-          <div class="comment-avatar">${App.user.name.charAt(0)}</div>
           <div class="comment-input-wrapper">
             <input type="text" class="comment-input" id="comment-input" placeholder="댓글을 입력하세요..." autocomplete="off">
             <div class="comment-submit-row">
@@ -1711,7 +1707,6 @@ function renderVideoPlayer(post) {
 function renderAttachment(att) {
   var driveUrl = 'https:' + '/' + '/drive.google.com/file/d/' + att.driveFileId + '/view';
   return '<div class="attachment-item" onclick="window.open(\'' + driveUrl + '\', \'_blank\')">' +
-    '<div class="attachment-icon ' + getFileIconClass(att.fileType) + '">' + getFileTypeLabel(att.fileType) + '<' + '/div>' +
     '<div class="attachment-info">' +
     '<div class="attachment-name">' + escapeHtml(att.fileName) + '<' + '/div>' +
     '<div class="attachment-size">' + formatFileSize(att.fileSize) + '<' + '/div>' +
@@ -1727,7 +1722,6 @@ function renderComments(comments) {
 
   return comments.map(c => `
     <div class="comment-item">
-      <div class="comment-avatar" style="background:linear-gradient(135deg, #667eea, #764ba2)">${c.userName.charAt(0)}</div>
       <div class="comment-content">
         <div class="comment-author">
           <span class="comment-author-name">${escapeHtml(c.userName)}</span>
@@ -1740,7 +1734,6 @@ function renderComments(comments) {
         </div>
         ${(c.replies ? c.replies.length > 0 : false) ? c.replies.map(r => `
           <div class="comment-item reply-item">
-            <div class="comment-avatar" style="background:linear-gradient(135deg, #11998e, #38ef7d)">${r.userName.charAt(0)}</div>
             <div class="comment-content">
               <div class="comment-author">
                 <span class="comment-author-name">${escapeHtml(r.userName)}</span>
