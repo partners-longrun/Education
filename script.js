@@ -1827,6 +1827,11 @@ function showLoading() {
   `;
 }
 
+function hideLoading() {
+  // renderPostDetail이 page-container를 다시 그리므로
+  // 별도 해제 로직 불필요 (호출 에러 방지용)
+}
+
 function showError(message) {
   document.getElementById('page-container').innerHTML = `
     <div class="empty-state">
