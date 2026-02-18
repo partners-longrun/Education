@@ -680,10 +680,17 @@ select {
     display: none;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-secondary);
     padding: 10px 32px;
     background: var(--background);
+    justify-content: space-between;
+}
+
+.breadcrumb .breadcrumb-links {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .breadcrumb.visible {
@@ -704,7 +711,7 @@ select {
 
 .breadcrumb .breadcrumb-separator {
     color: var(--text-secondary);
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .header-right {
@@ -2291,7 +2298,7 @@ select {
     }
 
     .simple-post-title {
-        font-size: 14px;
+        font-size: 15px;
         white-space: normal;
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -2304,12 +2311,12 @@ select {
 
     .simple-post-meta {
         gap: 8px;
-        font-size: 11.5px;
+        font-size: 12.5px;
         flex-wrap: wrap;
     }
 
     .breadcrumb {
-        font-size: 12px;
+        font-size: 13px;
         padding: 8px 16px;
     }
 }
