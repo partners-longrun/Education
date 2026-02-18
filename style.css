@@ -1157,7 +1157,7 @@ select {
 }
 
 .post-detail-title {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 16px;
