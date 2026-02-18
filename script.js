@@ -1888,6 +1888,18 @@ function extractYouTubeId(url) {
   return match ? match[1] : null;
 }
 
+function formatFileSize(bytes) {
+  if (!bytes || bytes === 0) return '';
+  var units = ['B', 'KB', 'MB', 'GB'];
+  var i = 0;
+  var size = Number(bytes);
+  while (size >= 1024 && i < units.length - 1) {
+    size /= 1024;
+    i++;
+  }
+  return size.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+}
+
 function getFileIconClass(fileType) {
   if (!fileType) return 'default';
   const type = fileType.toLowerCase();
