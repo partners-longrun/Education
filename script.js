@@ -745,7 +745,10 @@ async function loadBoard(boardId) {
   let board = App.boards.find(b => b.boardId === boardId);
   if (board) {
     setPageTitle(board.boardName);
-    setBreadcrumb([{ label: '대시보드', page: 'dashboard' }]);
+    setBreadcrumb(
+      [{ label: '대시보드', page: 'dashboard' }],
+      App.isAdmin ? '<button class="btn btn-primary" onclick="showPostModal()">+ 게시글 작성</button>' : ''
+    );
   }
 
   // 2. 게시글 목록 캐시 키 생성
@@ -782,7 +785,10 @@ async function loadBoard(boardId) {
     if (boardResult.success) {
       board = boardResult.data;
       setPageTitle(board.boardName);
-      setBreadcrumb([{ label: '대시보드', page: 'dashboard' }]);
+      setBreadcrumb(
+        [{ label: '대시보드', page: 'dashboard' }],
+        App.isAdmin ? '<button class="btn btn-primary" onclick="showPostModal()">+ 게시글 작성</button>' : ''
+      );
     }
   }
 }
@@ -793,11 +799,6 @@ function renderBoardPosts(posts, pagination) {
 
   if (posts.length === 0) {
     container.innerHTML = `
-      ${App.isAdmin ? `
-        <div style="margin-bottom:20px; display:flex; justify-content:flex-end;">
-          <button class="btn btn-primary" onclick="showPostModal()">+ 게시글 작성</button>
-        </div>
-      ` : ''}
       <div class="empty-state">
         <div class="empty-state-icon">📭</div>
         <div class="empty-state-title">게시글이 없습니다</div>
@@ -809,12 +810,7 @@ function renderBoardPosts(posts, pagination) {
 
   // [수정] 대시보드와 동일한 심플 리스트 형태로 변경 (사용자 요청)
   container.innerHTML = `
-    ${App.isAdmin ? `
-      <div style="margin-bottom:20px; display:flex; justify-content:flex-end;">
-        <button class="btn btn-primary" onclick="showPostModal()">+ 게시글 작성</button>
-      </div>
-    ` : ''}
-    <div class="simple-post-list" style="margin-top: 20px;">
+    <div class="simple-post-list">
       ${posts.map(post => `
         <div class="simple-post-item" onclick="navigateTo('post', {postId:'${post.postId}'})">
           <div class="simple-post-title">${escapeHtml(post.title)}</div>
@@ -1790,7 +1786,7 @@ function setPageTitle(title) {
   document.getElementById('page-title').textContent = title;
 }
 
-function setBreadcrumb(items) {
+function setBreadcrumb(items, actionHtml) {
   const bc = document.getElementById('breadcrumb');
   if (!bc) return;
 
@@ -1800,7 +1796,7 @@ function setBreadcrumb(items) {
     return;
   }
 
-  let html = '';
+  let html = '<div class="breadcrumb-links">';
   items.forEach(function (item, index) {
     if (index > 0) {
       html += '<span class="breadcrumb-separator">/</span>';
@@ -1812,6 +1808,11 @@ function setBreadcrumb(items) {
       html += '<span>' + escapeHtml(item.label) + '</span>';
     }
   });
+  html += '</div>';
+
+  if (actionHtml) {
+    html += actionHtml;
+  }
 
   bc.innerHTML = html;
   bc.classList.add('visible');
