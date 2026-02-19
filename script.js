@@ -865,22 +865,26 @@ async function loadPost(postId) {
     }
   }
 
-  // 2. [최적화] 캐시 데이터가 있으면 즉시 렌더링 (사용자는 즉각적인 반응을 느낌)
+  // 2. [최적화] 캐시 데이터가 있으면 즉시 렌더링 (첨부파일/댓글은 로딩 스피너)
   if (cachedPost) {
     console.log('Using cached post data for instant load:', postId);
+    cachedPost._fromCache = true;
     await renderPostDetail(cachedPost);
     hideLoading();
   }
 
-  // 3. 서버에서 최신 데이터(댓글/조회수 등) 가져오기 (백그라운드 업데이트)
+  // 3. 서버에서 최신 데이터(댓글/조회수/첨부파일 등) 가져오기
   try {
     const result = await api('getPostById', { postId });
 
     if (result.success) {
-      // 캐시된 데이터와 비교하여 변경점이 있거나(조회수 등), 댓글이 필요한 경우 업데이트
-      // 여기서는 그냥 무조건 최신 데이터로 다시 그립니다. (사용자는 눈치채지 못함)
-      await renderPostDetail(result.data); // 댓글 포함 전체 렌더링
-      if (!cachedPost) hideLoading(); // 캐시 없었으면 이제 로딩 해제
+      if (cachedPost) {
+        // [최적화] 캐시 렌더링 후 서버 응답 → 첨부파일/댓글 영역만 부분 갱신 (전체 재렌더링 X)
+        updatePostDetailFromServer(result.data);
+      } else {
+        await renderPostDetail(result.data);
+        hideLoading();
+      }
     } else {
       if (!cachedPost) {
         showError(result.error);
@@ -966,6 +970,7 @@ async function renderPostDetail(post) {
         </div>
       ` : ''}
       
+      <div id="attachments-section">
       ${attachments.length > 0 ? `
         <div class="content-card">
           <h3>📎 첨부파일</h3>
@@ -973,8 +978,18 @@ async function renderPostDetail(post) {
             ${attachments.map(att => renderAttachment(att)).join('')}
           </div>
         </div>
-      ` : ''}
+      ` : (!post._fromCache ? '' : `
+        <div class="content-card">
+          <h3>📎 첨부파일</h3>
+          <div style="text-align:center; padding:20px; color:var(--text-secondary);">
+            <div class="loading-spinner" style="width:24px;height:24px;margin:0 auto 8px;border-color:rgba(0,0,0,0.1);border-top-color:var(--primary);"></div>
+            로딩 중...
+          </div>
+        </div>
+      `)}
+      </div>
       
+      <div id="comments-section">
       <div class="content-card">
         <div class="comments-header">
           <h3 class="comments-title">💬 댓글 <span class="comments-count" id="comment-count">${comments ? comments.length : 0}</span></h3>
@@ -990,11 +1005,66 @@ async function renderPostDetail(post) {
         </div>
         
         <div class="comment-list" id="comment-list">
-          ${renderComments(comments)}
+          ${post._fromCache ? `
+            <div style="text-align:center; padding:20px; color:var(--text-secondary);">
+              <div class="loading-spinner" style="width:24px;height:24px;margin:0 auto 8px;border-color:rgba(0,0,0,0.1);border-top-color:var(--primary);"></div>
+              댓글 로딩 중...
+            </div>
+          ` : renderComments(comments)}
         </div>
+      </div>
       </div>
     </div>
   `;
+}
+
+/**
+ * [신규] 서버 응답으로 첨부파일/댓글 영역만 부분 갱신 (전체 재렌더링 X)
+ */
+function updatePostDetailFromServer(serverPost) {
+  // 첨부파일 영역 갱신
+  const attachmentsSection = document.getElementById('attachments-section');
+  if (attachmentsSection) {
+    const attachments = serverPost.attachments || [];
+    if (attachments.length > 0) {
+      attachmentsSection.innerHTML = `
+        <div class="content-card">
+          <h3>📎 첨부파일</h3>
+          <div class="attachment-list">
+            ${attachments.map(att => renderAttachment(att)).join('')}
+          </div>
+        </div>
+      `;
+    } else {
+      attachmentsSection.innerHTML = '';
+    }
+  }
+
+  // 댓글 영역 갱신
+  const commentsSection = document.getElementById('comments-section');
+  if (commentsSection) {
+    const comments = serverPost.comments || [];
+    commentsSection.innerHTML = `
+      <div class="content-card">
+        <div class="comments-header">
+          <h3 class="comments-title">💬 댓글 <span class="comments-count" id="comment-count">${comments.length}</span></h3>
+        </div>
+        
+        <div class="comment-form">
+          <div class="comment-input-wrapper">
+            <input type="text" class="comment-input" id="comment-input" placeholder="댓글을 입력하세요..." autocomplete="off">
+            <div class="comment-submit-row">
+              <button class="comment-submit" onclick="submitComment('${serverPost.postId}')">등록</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="comment-list" id="comment-list">
+          ${renderComments(comments)}
+        </div>
+      </div>
+    `;
+  }
 }
 
 // ========== 좋아요 (기능 삭제됨) ==========
