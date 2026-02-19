@@ -508,6 +508,14 @@ function navigateTo(page, params = {}) {
     }
   });
 
+  // [UI개선] fade-in 애니메이션 적용
+  const container = document.getElementById('page-container');
+  if (container) {
+    container.classList.remove('page-fade-in');
+    void container.offsetWidth; // reflow trigger
+    container.classList.add('page-fade-in');
+  }
+
   // 페이지 라우팅
   switch (page) {
     case 'dashboard':
@@ -528,7 +536,6 @@ function navigateTo(page, params = {}) {
     case 'admin-logs':
       loadAdminLogs();
       break;
-    // 페이지 라우팅
     default:
       loadDashboard();
   }
@@ -542,6 +549,9 @@ function navigateTo(page, params = {}) {
       fab.style.display = 'flex';
     }
   }
+
+  // [UI개선] 하단 탭바 상태 업데이트
+  updateTabBar(page);
 }
 
 // ========== 대시보드 ==========
@@ -634,14 +644,16 @@ function renderDashboard(data) {
 
   // HTML 렌더링
   const container = document.getElementById('page-container');
+  const boardIcons = ['📚', '💼', '📊', '🎯', '📢', '🔖', '📌', '🗂️'];
+
   container.innerHTML = `
-    <!-- 환영 인사 (아이콘 위치 변경) -->
+    <!-- 환영 인사 -->
     <div class="welcome-section" style="margin-bottom: 30px;">
       <h1 class="welcome-title">안녕하세요, ${escapeHtml(App.user.name)}님 👋</h1>
       <p class="welcome-subtitle">파트너스 교육관에 오신 것을 환영합니다.</p>
     </div>
     
-    <!-- 최근 영상 (Simple List & Indented) -->
+    <!-- 최근 영상 -->
     <section class="section">
       <div class="section-header">
         <h2 class="section-title">
@@ -650,11 +662,11 @@ function renderDashboard(data) {
         </h2>
       </div>
       <div class="simple-list">
-        ${renderSimpleList(data.recentVideos, '등록된 영상이 없습니다.')}
+        ${renderSimpleList(data.recentVideos, '등록된 영상이 없습니다.', 'video')}
       </div>
     </section>
     
-    <!-- 최근 자료 (Simple List & Indented & Spacing Added) -->
+    <!-- 최근 자료 -->
     <section class="section dashboard-section-spacer">
       <div class="section-header">
         <h2 class="section-title">
@@ -663,30 +675,54 @@ function renderDashboard(data) {
         </h2>
       </div>
       <div class="simple-list">
-        ${renderSimpleList(data.recentFiles, '등록된 자료가 없습니다.')}
+        ${renderSimpleList(data.recentFiles, '등록된 자료가 없습니다.', 'file')}
+      </div>
+    </section>
+
+    <!-- [UI개선] 게시판 섹션 -->
+    <section class="section dashboard-section-spacer">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="section-title-icon">📋</span>
+          게시판
+        </h2>
+      </div>
+      <div class="dashboard-boards-grid">
+        ${data.boards.map((board, i) => `
+          <div class="dashboard-board-card" onclick="navigateTo('board', {boardId:'${board.boardId}'})">
+            <div class="board-card-icon">${boardIcons[i % boardIcons.length]}</div>
+            <div class="board-card-name">${escapeHtml(board.boardName)}</div>
+            <div class="board-card-count">${board.postCount !== undefined ? board.postCount + '개의 게시글' : ''}</div>
+          </div>
+        `).join('')}
       </div>
     </section>
   `;
 }
 
-// [신규] 심플 리스트 렌더링 헬퍼
-function renderSimpleList(items, emptyMessage) {
+// [수정] 심플 리스트 렌더링 헬퍼 - 콘텐츠 타입 아이콘 추가
+function renderSimpleList(items, emptyMessage, defaultType) {
   if (!items || items.length === 0) {
-    return `<div class="empty-state-text" style="padding: 10px 0;">${emptyMessage}</div>`;
+    return `<div class="empty-state" style="padding:30px 0;">
+      ${getEmptySvg()}
+      <div class="empty-state-title">${emptyMessage}</div>
+    </div>`;
   }
 
   return `
     <ul class="simple-post-list">
-      ${items.map(item => `
+      ${items.map(item => {
+    const icon = getContentIcon(item, defaultType);
+    return `
         <li class="simple-post-item" onclick="navigateTo('post', {postId:'${item.postId}'})">
-          <span class="simple-post-title">${escapeHtml(item.title)}</span>
+          <span class="simple-post-title"><span class="content-type-icon">${icon}</span>${escapeHtml(item.title)}</span>
           <div class="simple-post-meta">
             <span>${formatDate(item.createdAt)}</span>
             <span>조회 ${item.viewCount || 0}</span>
             <span>댓글 ${item.commentCount || 0}</span>
           </div>
         </li>
-      `).join('')}
+      `}).join('')}
     </ul>
   `;
 }
@@ -738,7 +774,7 @@ function updateBoardNav(boards) {
 // [수정] 게시판 로딩 최적화 (캐싱 적용)
 async function loadBoard(boardId) {
   App.currentBoardId = boardId;
-  showLoading();
+  showBoardSkeleton(); // [UI개선] 스켈레톤 로딩
 
   // 1. 게시판 메타 정보 (캐시 우선)
   let board = App.boards.find(b => b.boardId === boardId);
@@ -792,14 +828,14 @@ async function loadBoard(boardId) {
   }
 }
 
-// [신규] 게시판 포스트 렌더링 함수 분리
+// [수정] 게시판 포스트 렌더링 함수 - 콘텐츠 아이콘, 빈상태 SVG
 function renderBoardPosts(posts, pagination) {
   const container = document.getElementById('page-container');
 
   if (posts.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">📭</div>
+        ${getEmptySvg()}
         <div class="empty-state-title">게시글이 없습니다</div>
         <div class="empty-state-text">아직 등록된 게시글이 없습니다.</div>
       </div>
@@ -807,22 +843,35 @@ function renderBoardPosts(posts, pagination) {
     return;
   }
 
-  // [수정] 대시보드와 동일한 심플 리스트 형태로 변경 (사용자 요청)
   container.innerHTML = `
     <div class="simple-post-list">
-      ${posts.map(post => `
+      ${posts.map(post => {
+    const icon = getContentIcon(post);
+    return `
         <div class="simple-post-item" onclick="navigateTo('post', {postId:'${post.postId}'})">
-          <div class="simple-post-title">${escapeHtml(post.title)}</div>
+          <div class="simple-post-title"><span class="content-type-icon">${icon}</span>${escapeHtml(post.title)}</div>
           <div class="simple-post-meta">
             <span>${formatDate(post.createdAt)}</span>
             <span>조회 ${post.viewCount || 0}</span>
             <span>댓글 ${post.commentCount || 0}</span>
           </div>
         </div>
-      `).join('')}
+      `}).join('')}
     </div>
     ${renderPagination(pagination, 'loadBoardPage')}
   `;
+}
+
+// [UI개선] 스켈레톤 로딩 표시
+function showBoardSkeleton() {
+  const container = document.getElementById('page-container');
+  const items = Array(6).fill('').map(() => `
+    <div class="skeleton-item">
+      <div class="skeleton-line title"></div>
+      <div class="skeleton-line meta"></div>
+    </div>
+  `).join('');
+  container.innerHTML = `<div class="skeleton-list">${items}</div>`;
 }
 
 async function loadBoardPage(page) {
@@ -939,11 +988,19 @@ async function renderPostDetail(post) {
   container.innerHTML = `
     <div class="post-container">
 
+      <div class="post-header-card">
+        <h1 class="post-detail-title">${escapeHtml(post.title)}</h1>
+        <div class="post-meta">
+          <span class="post-meta-item">📅 ${formatDate(post.createdAt)}</span>
+          <span class="post-meta-item">👁️ 조회 ${post.viewCount || 0}</span>
+        </div>
+      </div>
+
       ${renderVideoPlayer(post)}
       
       <!-- Main File Attachment (if not video and exists) -->
       ${(post.driveFileId && post.driveFileType !== 'video') ? `
-        <div class="content-card" style="margin-top:20px; cursor:pointer;" onclick="window.open('https://drive.google.com/file/d/${post.driveFileId}/view', '_blank')">
+        <div class="content-card" style="cursor:pointer;" onclick="window.open('https://drive.google.com/file/d/${post.driveFileId}/view', '_blank')">
           <div style="display:flex; align-items:center; gap:12px; padding:12px; background:#f8f9fa; border-radius:8px; border:1px solid #eee;">
             <div class="file-icon ${getFileIconClass(post.driveFileType)}" style="font-size:24px;">${getFileTypeLabel(post.driveFileType)}</div>
             <div>
@@ -955,14 +1012,6 @@ async function renderPostDetail(post) {
         </div>
       ` : ''}
 
-      <div class="post-header-card">
-        <h1 class="post-detail-title">${escapeHtml(post.title)}</h1>
-        <div class="post-meta">
-          <span class="post-meta-item">📅 ${formatDate(post.createdAt)}</span>
-          <span class="post-meta-item">👁️ 조회 ${post.viewCount || 0}</span>
-        </div>
-      </div>
-      
       ${post.content ? `
         <div class="content-card">
           <h3>📝 내용</h3>
@@ -1792,8 +1841,8 @@ function renderComments(comments) {
         </div>
         <p class="comment-text">${escapeHtml(c.content)}</p>
         <div class="comment-actions">
-          <span class="comment-action" onclick="showReplyForm('${c.commentId}')">💬 답글</span>
-          ${c.userId === App.user.employeeId || App.isAdmin ? `<span class="comment-action" onclick="deleteComment('${c.commentId}')">🗑️ 삭제</span>` : ''}
+          <button class="reply-btn" onclick="showReplyForm('${c.commentId}')">💬 답글</button>
+          ${c.userId === App.user.employeeId || App.isAdmin ? `<button class="reply-btn" onclick="deleteComment('${c.commentId}')">🗑️ 삭제</button>` : ''}
         </div>
         ${(c.replies ? c.replies.length > 0 : false) ? c.replies.map(r => `
           <div class="comment-item reply-item">
@@ -1819,20 +1868,22 @@ function renderPagination(pagination, functionName) {
 
   var html = '<div class="pagination">';
 
+  // 이전 화살표
   var prevDisabled = pagination.page <= 1 ? ' disabled' : '';
-  html += '<button class="page-btn"' + prevDisabled + ' onclick="' + functionName + '(' + (pagination.page - 1) + ')">‹</button>';
+  html += '<button class="page-btn arrow"' + prevDisabled + ' onclick="' + functionName + '(' + (pagination.page - 1) + ')">‹</button>';
 
   for (var i = 1; i <= pagination.totalPages; i++) {
     if (i === 1 || i === pagination.totalPages || isInPageRange(i, pagination.page)) {
       var activeClass = i === pagination.page ? ' active' : '';
       html += '<button class="page-btn' + activeClass + '" onclick="' + functionName + '(' + i + ')">' + i + '</button>';
     } else if (i === pagination.page - 3 || i === pagination.page + 3) {
-      html += '<span>...</span>';
+      html += '<span class="page-ellipsis">···</span>';
     }
   }
 
+  // 다음 화살표
   var nextDisabled = pagination.page >= pagination.totalPages ? ' disabled' : '';
-  html += '<button class="page-btn"' + nextDisabled + ' onclick="' + functionName + '(' + (pagination.page + 1) + ')">›</button>';
+  html += '<button class="page-btn arrow"' + nextDisabled + ' onclick="' + functionName + '(' + (pagination.page + 1) + ')">›</button>';
   html += '</div>';
   return html;
 }
@@ -2121,6 +2172,81 @@ function getBoardIcon(boardName) {
     '우수 사례': '💡'
   };
   return icons[boardName] || '📋';
+}
+
+// [UI개선] 콘텐츠 타입 아이콘 반환
+function getContentIcon(post, defaultType) {
+  if (post.driveFileType === 'video' || post.youtubeUrl || defaultType === 'video') return '📺';
+  if (post.driveFileId || defaultType === 'file') return '📎';
+  if (post.contentType === 'video') return '📺';
+  if (post.contentType === 'file') return '📎';
+  return '📄';
+}
+
+// [UI개선] 빈 상태 SVG 일러스트
+function getEmptySvg() {
+  return `<div class="empty-state-svg">
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="20" y="30" width="80" height="60" rx="8" fill="#f0f0f0" stroke="#d0d0d0" stroke-width="2"/>
+      <rect x="30" y="42" width="40" height="4" rx="2" fill="#d0d0d0"/>
+      <rect x="30" y="52" width="60" height="4" rx="2" fill="#e0e0e0"/>
+      <rect x="30" y="62" width="50" height="4" rx="2" fill="#e0e0e0"/>
+      <rect x="30" y="72" width="30" height="4" rx="2" fill="#e8e8e8"/>
+      <circle cx="90" cy="85" r="20" fill="#f8f8f8" stroke="#d0d0d0" stroke-width="2"/>
+      <path d="M85 85 L95 85 M90 80 L90 90" stroke="#c0c0c0" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </div>`;
+}
+
+// [UI개선] 하단 탭바 상태 업데이트
+function updateTabBar(page) {
+  const tabs = document.querySelectorAll('.tab-item');
+  tabs.forEach(tab => tab.classList.remove('active'));
+
+  if (page === 'dashboard') {
+    const homeTab = document.getElementById('tab-home');
+    if (homeTab) homeTab.classList.add('active');
+  } else if (page === 'board' || page === 'post') {
+    const boardsTab = document.getElementById('tab-boards');
+    if (boardsTab) boardsTab.classList.add('active');
+  }
+}
+
+// [UI개선] 게시판 탭 터치
+function showBoardsTab() {
+  if (App.boards && App.boards.length > 0) {
+    navigateTo('board', { boardId: App.boards[0].boardId });
+  } else {
+    navigateTo('dashboard');
+  }
+}
+
+// [UI개선] 내정보 탭
+function showProfileTab() {
+  updateTabBar('profile');
+  const profileTab = document.getElementById('tab-profile');
+  if (profileTab) profileTab.classList.add('active');
+
+  const container = document.getElementById('page-container');
+  setPageTitle('내 정보');
+  setBreadcrumb([]);
+
+  container.innerHTML = `
+    <div class="post-container" style="max-width:500px;">
+      <div class="content-card" style="text-align:center;">
+        <div style="width:80px;height:80px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:32px;font-weight:700;margin:0 auto 16px;">
+          ${App.user ? App.user.name.charAt(0) : '?'}
+        </div>
+        <h2 style="margin-bottom:4px;">${App.user ? escapeHtml(App.user.name) : '-'}</h2>
+        <p style="color:var(--text-secondary);font-size:14px;margin-bottom:4px;">${App.user ? escapeHtml(App.user.department || '') : ''}</p>
+        <p style="color:var(--text-secondary);font-size:13px;">사번: ${App.user ? App.user.employeeId : '-'}</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">
+        <button class="btn btn-primary" style="width:100%;padding:14px;" onclick="showChangePasswordModal(false)">🔑 비밀번호 변경</button>
+        <button class="btn btn-secondary" style="width:100%;padding:14px;" onclick="handleLogout()">🔓 로그아웃</button>
+      </div>
+    </div>
+  `;
 }
 
 // ========== [신규] 성능 모니터링 ==========
