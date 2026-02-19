@@ -188,6 +188,27 @@
                 <!-- 동적으로 채워짐 -->
             </div>
         </main>
+
+        <!-- 모바일 하단 탭바 -->
+        <nav class="bottom-tab-bar" id="bottom-tab-bar">
+            <div class="tab-bar-inner">
+                <button class="tab-item active" id="tab-home" onclick="navigateTo('dashboard')">
+                    <span class="tab-icon">🏠</span>
+                    <span class="tab-label">홈</span>
+                </button>
+                <button class="tab-item" id="tab-boards" onclick="showBoardsTab()">
+                    <span class="tab-icon">📚</span>
+                    <span class="tab-label">게시판</span>
+                </button>
+                <button class="tab-item" id="tab-profile" onclick="showProfileTab()">
+                    <span class="tab-icon">👤</span>
+                    <span class="tab-label">내정보</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- FAB 뒤로가기 (모바일) -->
+        <button class="fab-back" id="fab-back" style="display:none;" onclick="handleFabClick()">←</button>
     </div>
 
     <!-- 모달 컨테이너 -->
