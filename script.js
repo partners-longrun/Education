@@ -560,7 +560,7 @@ function navigateTo(page, params = {}) {
 async function loadDashboard() {
   console.time('loadDashboard'); // 성능 측정
 
-  setPageTitle('대시보드');
+  setPageTitle('파트너스 <span style="color:var(--primary)">교육관</span>');
   setBreadcrumb([]);
 
   const container = document.getElementById('page-container');
@@ -781,7 +781,7 @@ async function loadBoard(boardId) {
   if (board) {
     setPageTitle(board.boardName);
     setBreadcrumb(
-      [{ label: '대시보드', page: 'dashboard' }],
+      [{ label: '홈', page: 'dashboard' }],
       App.isAdmin ? '<button class="btn btn-primary" onclick="showPostModal()">+ 게시글 작성</button>' : ''
     );
   }
@@ -821,7 +821,7 @@ async function loadBoard(boardId) {
       board = boardResult.data;
       setPageTitle(board.boardName);
       setBreadcrumb(
-        [{ label: '대시보드', page: 'dashboard' }],
+        [{ label: '홈', page: 'dashboard' }],
         App.isAdmin ? '<button class="btn btn-primary" onclick="showPostModal()">+ 게시글 작성</button>' : ''
       );
     }
@@ -960,7 +960,7 @@ async function renderPostDetail(post) {
   }
   setPageTitle(boardName || '게시판');
   setBreadcrumb([
-    { label: '대시보드', page: 'dashboard' },
+    { label: '홈', page: 'dashboard' },
     { label: boardName || '게시판', page: 'board', params: { boardId: post.boardId } }
   ]);
 
@@ -1890,7 +1890,7 @@ function renderPagination(pagination, functionName) {
 
 // ========== 유틸리티 ==========
 function setPageTitle(title) {
-  document.getElementById('page-title').textContent = title;
+  document.getElementById('page-title').innerHTML = title;
 }
 
 function setBreadcrumb(items, actionHtml) {
@@ -2177,9 +2177,9 @@ function getBoardIcon(boardName) {
 // [UI개선] 콘텐츠 타입 아이콘 반환
 function getContentIcon(post, defaultType) {
   if (post.driveFileType === 'video' || post.youtubeUrl || defaultType === 'video') return '📺';
-  if (post.driveFileId || defaultType === 'file') return '📎';
   if (post.contentType === 'video') return '📺';
-  if (post.contentType === 'file') return '📎';
+  if (post.driveFileId || defaultType === 'file') return '📄';
+  if (post.contentType === 'file') return '📄';
   return '📄';
 }
 
@@ -2209,16 +2209,88 @@ function updateTabBar(page) {
   } else if (page === 'board' || page === 'post') {
     const boardsTab = document.getElementById('tab-boards');
     if (boardsTab) boardsTab.classList.add('active');
+  } else if (page === 'search') {
+    const searchTab = document.getElementById('tab-search');
+    if (searchTab) searchTab.classList.add('active');
   }
 }
 
-// [UI개선] 게시판 탭 터치
+// [UI개선] 게시판 탭 터치 - 게시판 모음 페이지
 function showBoardsTab() {
-  if (App.boards && App.boards.length > 0) {
-    navigateTo('board', { boardId: App.boards[0].boardId });
-  } else {
-    navigateTo('dashboard');
+  updateTabBar('board');
+  const boardsTab = document.getElementById('tab-boards');
+  if (boardsTab) boardsTab.classList.add('active');
+
+  setPageTitle('게시판');
+  setBreadcrumb([{ label: '홈', page: 'dashboard' }]);
+
+  const container = document.getElementById('page-container');
+
+  // fade-in
+  container.classList.remove('page-fade-in');
+  void container.offsetWidth;
+  container.classList.add('page-fade-in');
+
+  const boardIcons = ['📚', '💼', '📊', '🎯', '📢', '🔖', '📌', '🗂️'];
+
+  if (!App.boards || App.boards.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        ${getEmptySvg()}
+        <div class="empty-state-title">등록된 게시판이 없습니다</div>
+      </div>
+    `;
+    return;
   }
+
+  container.innerHTML = `
+    <div class="dashboard-boards-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+      ${App.boards.map((board, i) => `
+        <div class="dashboard-board-card" onclick="navigateTo('board', {boardId:'${board.boardId}'})">
+          <div class="board-card-icon">${boardIcons[i % boardIcons.length]}</div>
+          <div class="board-card-name">${escapeHtml(board.boardName)}</div>
+          <div class="board-card-count">${board.postCount !== undefined ? board.postCount + '개의 게시글' : ''}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// [UI개선] 검색 탭 터치
+function showSearchTab() {
+  updateTabBar('search');
+  const searchTab = document.getElementById('tab-search');
+  if (searchTab) searchTab.classList.add('active');
+
+  setPageTitle('검색');
+  setBreadcrumb([{ label: '홈', page: 'dashboard' }]);
+
+  const container = document.getElementById('page-container');
+  container.classList.remove('page-fade-in');
+  void container.offsetWidth;
+  container.classList.add('page-fade-in');
+
+  container.innerHTML = `
+    <div style="max-width:600px; margin:0 auto; padding:20px 0;">
+      <div style="position:relative;">
+        <input type="text" id="mobile-search-input" 
+          style="width:100%; padding:14px 48px 14px 16px; border:2px solid var(--border); border-radius:12px; font-size:16px; background:var(--surface); outline:none; transition: border-color 0.2s;"
+          placeholder="검색어를 입력하세요..." 
+          onfocus="this.style.borderColor='var(--primary)'"
+          onblur="this.style.borderColor='var(--border)'"
+          onkeypress="if(event.key==='Enter'){handleSearch(this.value)}">
+        <button style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:var(--primary); color:white; border:none; border-radius:10px; width:40px; height:40px; font-size:18px; cursor:pointer;" 
+          onclick="handleSearch(document.getElementById('mobile-search-input').value)">🔍</button>
+      </div>
+      <div id="mobile-search-results" style="margin-top:20px;"></div>
+    </div>
+  `;
+
+  // 자동 포커스
+  setTimeout(() => {
+    const input = document.getElementById('mobile-search-input');
+    if (input) input.focus();
+  }, 100);
 }
 
 // [UI개선] 내정보 탭
