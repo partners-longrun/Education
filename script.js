@@ -2220,6 +2220,7 @@ function updateTabBar(page) {
 
 // [UI개선] 게시판 탭 터치 - 게시판 모음 페이지
 function showBoardsTab() {
+  window.scrollTo(0, 0);
   updateTabBar('board');
   const boardsTab = document.getElementById('tab-boards');
   if (boardsTab) boardsTab.classList.add('active');
@@ -2261,6 +2262,7 @@ function showBoardsTab() {
 
 // [UI개선] 검색 탭 터치
 function showSearchTab() {
+  window.scrollTo(0, 0);
   updateTabBar('search');
   const searchTab = document.getElementById('tab-search');
   if (searchTab) searchTab.classList.add('active');
@@ -2298,6 +2300,7 @@ function showSearchTab() {
 
 // [UI개선] 내정보 탭
 function showProfileTab() {
+  window.scrollTo(0, 0);
   updateTabBar('profile');
   const profileTab = document.getElementById('tab-profile');
   if (profileTab) profileTab.classList.add('active');
