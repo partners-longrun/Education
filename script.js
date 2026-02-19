@@ -923,16 +923,9 @@ async function renderPostDetail(post) {
     });
   }
 
-  // 댓글 로드 (캐시 사용 X, 항상 최신)
-  // 단, 화면이 먼저 그려진 후 댓글이 로드될 수 있도록 비동기 처리
-  let comments = [];
-  try {
-    // API call moved to inside render to allow initial paint if needed
-    const commentsResult = await api('getComments', { postId: post.postId });
-    comments = commentsResult.success ? commentsResult.data : [];
-  } catch (e) {
-    console.error("Failed to load comments", e);
-  }
+  // [최적화] 댓글은 서버에서 getPostById 응답에 포함됨 (별도 API 호출 제거)
+  // 캐시 데이터에는 댓글이 없을 수 있으므로 방어적 처리
+  let comments = post.comments || [];
 
   const container = document.getElementById('page-container');
 
