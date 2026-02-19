@@ -481,6 +481,9 @@ function updateUserProfile() {
 function navigateTo(page, params = {}) {
   App.currentPage = page;
 
+  // 화면 전환 시 스크롤 최상단으로 이동
+  window.scrollTo(0, 0);
+
   // 현재 페이지 정보 저장 (새로고침 대응)
   sessionStorage.setItem('currentNav', JSON.stringify({ page: page, params: params }));
 
