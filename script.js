@@ -2257,6 +2257,31 @@ function showBoardsTab() {
         </div>
       `).join('')}
     </div>
+
+    ${App.isAdmin ? `
+    <section class="section" style="margin-top:32px;">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="section-title-icon">⚙️</span>
+          관리자
+        </h2>
+      </div>
+      <div class="dashboard-boards-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+        <div class="dashboard-board-card" style="border-left-color:#e74c3c;" onclick="navigateTo('admin-boards')">
+          <div class="board-card-icon">📋</div>
+          <div class="board-card-name">게시판 관리</div>
+        </div>
+        <div class="dashboard-board-card" style="border-left-color:#3498db;" onclick="navigateTo('admin-posts')">
+          <div class="board-card-icon">📝</div>
+          <div class="board-card-name">게시글 관리</div>
+        </div>
+        <div class="dashboard-board-card" style="border-left-color:#2ecc71;" onclick="navigateTo('admin-logs')">
+          <div class="board-card-icon">📊</div>
+          <div class="board-card-name">로그인 기록</div>
+        </div>
+      </div>
+    </section>
+    ` : ''}
   `;
 }
 
