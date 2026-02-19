@@ -120,7 +120,7 @@
                     <div class="nav-section-title">메뉴</div>
                     <a href="#" class="nav-item active" data-page="dashboard">
                         <span class="nav-item-icon">🏠</span>
-                        대시보드
+                        홈
                     </a>
                 </div>
 
@@ -170,7 +170,7 @@
             <header class="header">
                 <div class="header-left">
                     <button class="menu-toggle" id="menu-toggle">☰</button>
-                    <h1 class="page-title" id="page-title">대시보드</h1>
+                    <h1 class="page-title" id="page-title">홈</h1>
                 </div>
                 <div class="header-right">
                     <div class="search-box">
@@ -195,6 +195,10 @@
                 <button class="tab-item active" id="tab-home" onclick="navigateTo('dashboard')">
                     <span class="tab-icon">🏠</span>
                     <span class="tab-label">홈</span>
+                </button>
+                <button class="tab-item" id="tab-search" onclick="showSearchTab()">
+                    <span class="tab-icon">🔍</span>
+                    <span class="tab-label">검색</span>
                 </button>
                 <button class="tab-item" id="tab-boards" onclick="showBoardsTab()">
                     <span class="tab-icon">📚</span>
