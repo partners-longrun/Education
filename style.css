@@ -1170,9 +1170,6 @@ select {
     gap: 24px;
     color: var(--text-secondary);
     font-size: 14px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
 }
 
 .post-meta-item {
@@ -1699,44 +1696,7 @@ select {
     color: var(--error);
 }
 
-/* ========== Pagination ========== */
-.pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    margin-top: 24px;
-}
-
-.page-btn {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.page-btn:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-}
-
-.page-btn.active {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: white;
-}
-
-.page-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
+/* ========== Pagination → 파일 끝에 리디자인 버전 사용 ========== */
 
 /* ========== Responsive ========== */
 @media (max-width: 1400px) {
@@ -2260,7 +2220,19 @@ select {
 
 .simple-post-item:hover {
     background: var(--background);
-    padding-left: 20px;
+    padding-left: 22px;
+    border-left: 3px solid var(--primary);
+}
+
+.simple-post-item:hover .simple-post-title {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.content-type-icon {
+    flex-shrink: 0;
+    font-size: 14px;
+    margin-right: 6px;
 }
 
 .simple-post-title {
@@ -2318,5 +2290,310 @@ select {
     .breadcrumb {
         font-size: 13px;
         padding: 8px 16px;
+    }
+}
+
+/* ========== [UI개선] 페이지 전환 fade-in ========== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.page-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* ========== [UI개선] 스켈레톤 로딩 ========== */
+@keyframes skeletonPulse {
+    0% {
+        background-position: -200px 0;
+    }
+
+    100% {
+        background-position: calc(200px + 100%) 0;
+    }
+}
+
+.skeleton-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.skeleton-item {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.skeleton-item:first-child {
+    border-top: 1px solid var(--border);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.skeleton-item:last-child {
+    border-bottom: none;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.skeleton-line {
+    height: 14px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200px 100%;
+    animation: skeletonPulse 1.5s infinite;
+}
+
+.skeleton-line.title {
+    width: 70%;
+    height: 16px;
+}
+
+.skeleton-line.meta {
+    width: 40%;
+    height: 12px;
+}
+
+/* ========== [UI개선] 빈 상태 SVG ========== */
+.empty-state-svg {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 16px;
+    opacity: 0.6;
+}
+
+/* ========== [UI개선] 대시보드 게시판 카드 ========== */
+.dashboard-boards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.dashboard-board-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--primary);
+}
+
+.dashboard-board-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-left-color: var(--primary-dark);
+}
+
+.dashboard-board-card .board-card-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.dashboard-board-card .board-card-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.dashboard-board-card .board-card-count {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* ========== [UI개선] 대댓글 버튼 ========== */
+.reply-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.reply-btn:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* ========== [UI개선] 페이지네이션 리디자인 ========== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    min-width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+}
+
+.page-btn:hover:not(:disabled):not(.active) {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+.page-btn.active {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-color: var(--primary);
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(244, 116, 35, 0.3);
+}
+
+.page-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.page-btn.arrow {
+    font-size: 16px;
+    padding: 0 10px;
+}
+
+.page-ellipsis {
+    width: 36px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* ========== [UI개선] 모바일 하단 탭바 ========== */
+.bottom-tab-bar {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 200;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.tab-bar-inner {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    flex: 1;
+    height: 100%;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+    background: none;
+    border: none;
+    font-family: inherit;
+}
+
+.tab-item.active {
+    color: var(--primary);
+}
+
+.tab-item .tab-icon {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.tab-item .tab-label {
+    font-size: 10px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .bottom-tab-bar {
+        display: block;
+    }
+
+    /* 사이드바 숨김 (탭바 대체) */
+    .menu-toggle {
+        display: none !important;
+    }
+
+    .sidebar {
+        display: none !important;
+    }
+
+    .sidebar-overlay {
+        display: none !important;
+    }
+
+    /* 하단 탭바 공간 확보 */
+    .main-content {
+        padding-bottom: 68px;
+    }
+
+    /* 상세화면 섹션 간격 축소 */
+    .post-container .content-card {
+        margin-bottom: 12px;
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    .post-container .post-header-card {
+        margin-bottom: 12px;
+        padding: 16px;
+    }
+
+    .post-container .video-player {
+        margin-bottom: 12px;
+        border-radius: 10px;
+    }
+
+    /* FAB 위치 조정 (탭바 위로) */
+    .fab-back {
+        bottom: 76px;
+    }
+
+    /* 대시보드 게시판 그리드 */
+    .dashboard-boards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .dashboard-board-card {
+        padding: 14px;
     }
 }
