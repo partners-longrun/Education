@@ -568,18 +568,19 @@ async function loadDashboard() {
 
   const container = document.getElementById('page-container');
 
-  // [최적화] 로딩 스켈레톤 (간소화된 버전)
+  // 게시판과 동일한 skeleton-list 방식으로 로딩 표시
+  const skeletonItems = Array(5).fill('').map(() => `
+    <div class="skeleton-item">
+      <div class="skeleton-line title"></div>
+      <div class="skeleton-line meta"></div>
+    </div>
+  `).join('');
   container.innerHTML = `
-    <div class="dashboard-loading">
-      <div class="skeleton-header"></div>
-      <div class="skeleton-section">
-        <div class="skeleton-title"></div>
-        <div class="skeleton-items"></div>
-      </div>
-      <div class="skeleton-section">
-        <div class="skeleton-title"></div>
-        <div class="skeleton-items"></div>
-      </div>
+    <div class="skeleton-list">
+      <div class="skeleton-line title" style="width:40%; margin-bottom:24px;"></div>
+      ${skeletonItems}
+      <div class="skeleton-line title" style="width:40%; margin:24px 0 16px;"></div>
+      ${skeletonItems}
     </div>
   `;
 
