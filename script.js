@@ -1785,19 +1785,21 @@ function renderBoardCards(boards) {
     return '<p class="empty-state-text">등록된 게시판이 없습니다.</p>';
   }
   const icons = ['📚', '💼', '📊', '🎯', '📢'];
-  return boards.map((b, i) => `
+  return boards.map((b, i) => {
+    const totalPosts = (b.videoCount || 0) + (b.fileCount || 0);
+    return `
     <div class="board-card" onclick="navigateTo('board', {boardId:'${b.boardId}'})">
-      <div class="board-header">
+      <div class="board-header" style="display:flex; align-items:center; gap:8px;">
         <div class="board-icon">${icons[i % icons.length]}</div>
-        <h3 class="board-title">${escapeHtml(b.boardName)}</h3>
+        <h3 class="board-title" style="margin:0; font-size:16px; display:flex; align-items:center; gap:6px;">
+          ${escapeHtml(b.boardName)}
+          <span style="font-size:14px; font-weight:normal; color:var(--text-secondary, #666);">(${totalPosts})</span>
+        </h3>
       </div>
-      <p class="board-desc">${escapeHtml(b.description || '게시판 설명이 없습니다.')}</p>
-      <div class="board-stats">
-        <span class="board-stat">📺 영상 <span class="board-stat-value">${b.videoCount || 0}</span></span>
-        <span class="board-stat">📁 자료 <span class="board-stat-value">${b.fileCount || 0}</span></span>
-      </div>
+      <p class="board-desc" style="margin-top:8px;">${escapeHtml(b.description || '게시판 설명이 없습니다.')}</p>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function renderPostCard(post) {
