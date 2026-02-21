@@ -280,8 +280,17 @@
             </div>
         </nav>
 
-        <!-- FAB 뒤로가기 (모바일) -->
-        <button class="fab-back" id="fab-back" style="display:none;" onclick="handleFabClick()">←</button>
+        <!-- FAB Container (모바일) -->
+        <div class="fab-container" id="fab-container" style="display:none;">
+            <button class="fab-btn" id="fab-up" onclick="handleFabUpClick()">
+                <div class="fab-icon">↑</div>
+                <div class="fab-text">상위</div>
+            </button>
+            <button class="fab-btn" id="fab-back" onclick="handleFabClick()">
+                <div class="fab-icon">←</div>
+                <div class="fab-text">이전</div>
+            </button>
+        </div>
     </div>
 
     <!-- 모달 컨테이너 -->
