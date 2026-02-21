@@ -1070,7 +1070,7 @@ select {
 .board-card {
     background: var(--surface);
     border-radius: 16px;
-    padding: 24px;
+    padding: 16px;
     box-shadow: var(--shadow);
     transition: all 0.3s ease;
     cursor: pointer;
@@ -1090,15 +1090,15 @@ select {
 }
 
 .board-icon {
-    width: 44px;
-    height: 44px;
+    width: 32px;
+    height: 32px;
     background: var(--primary-light);
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--primary);
-    font-size: 20px;
+    font-size: 18px;
 }
 
 .board-title {
@@ -2409,7 +2409,7 @@ select {
 .dashboard-board-card {
     background: var(--surface);
     border-radius: 12px;
-    padding: 20px;
+    padding: 16px;
     box-shadow: var(--shadow);
     cursor: pointer;
     transition: all 0.3s ease;
@@ -2423,7 +2423,7 @@ select {
 }
 
 .dashboard-board-card .board-card-icon {
-    font-size: 24px;
+    font-size: 18px;
     margin-bottom: 8px;
 }
 
