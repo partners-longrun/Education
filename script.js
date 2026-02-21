@@ -544,12 +544,12 @@ function navigateTo(page, params = {}) {
   }
 
   // FAB Visibility
-  const fab = document.getElementById('fab-back');
-  if (fab) {
+  const fabContainer = document.getElementById('fab-container');
+  if (fabContainer) {
     if (page === 'dashboard') {
-      fab.style.display = 'none';
+      fabContainer.style.display = 'none';
     } else {
-      fab.style.display = 'flex';
+      fabContainer.style.display = 'flex';
     }
   }
 
@@ -2175,6 +2175,18 @@ async function handleChangePassword(forced) {
 }
 
 function handleFabClick() {
+  if (App.currentPage === 'post' && App.currentSearchQuery) {
+    // 검색에서 들어온 경우 검색결과로 우선 이전
+    handleSearch(App.currentSearchQuery);
+    return;
+  }
+
+  // 일반적인 이전(상하위 계층 이동과 대동소이함)
+  handleFabUpClick();
+}
+
+function handleFabUpClick() {
+  // 무조건 상위 계층으로 이동
   if (App.currentPage === 'post') {
     if (App.currentBoardId) {
       navigateTo('board', { boardId: App.currentBoardId });
