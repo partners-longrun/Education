@@ -1686,7 +1686,7 @@ async function handleSearch(query) {
     showLoading();
     result = await api('search', { query });
     if (result.success) {
-      LocalCache.set(cacheKey, result.data, 5); // 5분 캐시
+      LocalCache.set(cacheKey, result.data, 10); // 10분 캐시
     }
   }
 
