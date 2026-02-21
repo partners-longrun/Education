@@ -101,7 +101,8 @@ const App = {
   currentPostId: null,
   boards: [],
   isAdmin: false,
-  isFirstLogin: false
+  isFirstLogin: false,
+  historyStack: [] // Navigation history for "Back" functionality
 };
 
 // ========== 초기화 ==========
@@ -478,8 +479,14 @@ function updateUserProfile() {
 }
 
 // ========== 네비게이션 ==========
-function navigateTo(page, params = {}) {
+function navigateTo(page, params = {}, isBack = false) {
+  // 뒤로 가기가 아니고, 현재 페이지가 존재하면 히스토리 스택에 저장
+  if (!isBack && App.currentPage && App.currentPage !== page) {
+    App.historyStack.push({ page: App.currentPage, params: App.currentParams || {} });
+  }
+
   App.currentPage = page;
+  App.currentParams = params;
 
   // 화면 전환 시 스크롤 최상단으로 이동
   window.scrollTo(0, 0);
@@ -2175,14 +2182,13 @@ async function handleChangePassword(forced) {
 }
 
 function handleFabClick() {
-  if (App.currentPage === 'post' && App.currentSearchQuery) {
-    // 검색에서 들어온 경우 검색결과로 우선 이전
-    handleSearch(App.currentSearchQuery);
-    return;
+  if (App.historyStack && App.historyStack.length > 0) {
+    const prevState = App.historyStack.pop();
+    navigateTo(prevState.page, prevState.params, true);
+  } else {
+    // 히스토리가 없으면 기본적으로 대시보드로 이동
+    navigateTo('dashboard', {}, true);
   }
-
-  // 일반적인 이전(상하위 계층 이동과 대동소이함)
-  handleFabUpClick();
 }
 
 function handleFabUpClick() {
