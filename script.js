@@ -1188,6 +1188,7 @@ async function loadAdminBoards() {
             <th>순서</th>
             <th>게시판명</th>
             <th>설명</th>
+            <th>대시보드 노출</th>
             <th>게시글 수</th>
             <th>관리</th>
           </tr>
@@ -1198,6 +1199,7 @@ async function loadAdminBoards() {
               <td>${board.sortOrder}</td>
               <td><strong>${escapeHtml(board.boardName)}</strong></td>
               <td>${escapeHtml(board.description || '-')}</td>
+              <td>${board.showOnDashboard ? 'O' : 'X'}</td>
               <td>${board.postCount}</td>
               <td class="admin-actions">
                 <button class="admin-btn edit" onclick="showBoardModal('${board.boardId}')">수정</button>
@@ -1234,6 +1236,10 @@ async function showBoardModal(boardId = null) {
             <label class="form-label">설명</label>
             <textarea class="form-input" id="modal-board-desc" rows="3" placeholder="게시판 설명을 입력하세요">${board ? escapeHtml(board.description || '') : ''}</textarea>
           </div>
+          <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="modal-board-show" ${board && board.showOnDashboard ? 'checked' : ''}>
+            <label for="modal-board-show" class="form-label" style="margin-bottom:0;">홈 대시보드에 최신글 노출하기</label>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick="closeModal()">취소</button>
@@ -1249,6 +1255,7 @@ async function showBoardModal(boardId = null) {
 async function saveBoard(boardId) {
   const boardName = document.getElementById('modal-board-name').value.trim();
   const description = document.getElementById('modal-board-desc').value.trim();
+  const showOnDashboard = document.getElementById('modal-board-show').checked;
 
   if (!boardName) {
     showToast('게시판명을 입력해주세요.', 'error');
@@ -1257,9 +1264,9 @@ async function saveBoard(boardId) {
 
   let result;
   if (boardId) {
-    result = await api('updateBoard', { boardId, boardName, description });
+    result = await api('updateBoard', { boardId, boardName, description, showOnDashboard });
   } else {
-    result = await api('createBoard', { boardName, description });
+    result = await api('createBoard', { boardName, description, showOnDashboard });
   }
 
   if (result.success) {
