@@ -657,50 +657,25 @@ function renderDashboard(data) {
       <p class="welcome-subtitle">파트너스 교육관에 오신 것을 환영합니다.</p>
     </div>
     
-    <!-- 최근 영상 -->
-    <section class="section">
-      <div class="section-header">
-        <h2 class="section-title">
-          <span class="section-title-icon">📺</span>
-          최근 영상
-        </h2>
-      </div>
-      <div class="simple-list">
-        ${renderSimpleList(data.recentVideos, '등록된 영상이 없습니다.', 'video')}
-      </div>
-    </section>
+    <!-- 대시보드 옵션 켜진 게시판의 최신글 보기 -->
+    ${data.boards.filter(b => b.showOnDashboard).map(board => `
+      <section class="section">
+        <div class="section-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <h2 class="section-title" style="cursor:pointer;" onclick="navigateTo('board', {boardId:'${board.boardId}'})">
+            <span class="section-title-icon">📋</span>
+            ${escapeHtml(board.boardName)}
+          </h2>
+          <button class="btn" style="font-size:12px; padding:4px 8px;" onclick="navigateTo('board', {boardId:'${board.boardId}'})">더보기 ></button>
+        </div>
+        <div class="simple-list">
+          ${renderSimpleList(board.recentPosts, '등록된 게시글이 없습니다.', 'file')}
+        </div>
+      </section>
+    `).join('')}
     
-    <!-- 최근 자료 -->
-    <section class="section dashboard-section-spacer">
-      <div class="section-header">
-        <h2 class="section-title">
-          <span class="section-title-icon">📁</span>
-          최근 자료
-        </h2>
-      </div>
-      <div class="simple-list">
-        ${renderSimpleList(data.recentFiles, '등록된 자료가 없습니다.', 'file')}
-      </div>
-    </section>
-
-    <!-- [UI개선] 게시판 섹션 -->
-    <section class="section dashboard-section-spacer">
-      <div class="section-header">
-        <h2 class="section-title">
-          <span class="section-title-icon">📋</span>
-          게시판
-        </h2>
-      </div>
-      <div class="dashboard-boards-grid">
-        ${data.boards.map((board, i) => `
-          <div class="dashboard-board-card" onclick="navigateTo('board', {boardId:'${board.boardId}'})">
-            <div class="board-card-icon">${boardIcons[i % boardIcons.length]}</div>
-            <div class="board-card-name">${escapeHtml(board.boardName)}</div>
-            <div class="board-card-count">${board.postCount !== undefined ? board.postCount + '개의 게시글' : ''}</div>
-          </div>
-        `).join('')}
-      </div>
-    </section>
+    <!-- 게시판 이동 메뉴 부분 삭제 요청에 따라 기존 게시판 섹션은 제외하거나, 하단에 그대로 둠 
+         요청 내용: "'최근 영상, 최근 자료, 게시판'을 각 게시판 제목으로 대체하고..." -> 기존 섹션들 모두 대체 -->
+    <!-- 추가적인 하단 게시판 요약(격자)은 요청에 의해 생략 -->
   `;
 }
 
