@@ -1995,37 +1995,57 @@ select {
 
 /* ========== UI Improvements ========== */
 
-/* FAB (Floating Action Button) for Mobile Back */
-.fab-back {
+/* FAB (Floating Action Button) Container handling Stacked Up/Back Buttons */
+.fab-container {
     position: fixed;
-    bottom: 24px;
-    right: 24px;
-    width: 56px;
-    height: 56px;
+    bottom: 16px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 1000;
+}
+
+.fab-btn {
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background-color: var(--primary);
     color: white;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     cursor: pointer;
-    z-index: 1000;
     transition: transform 0.2s, background-color 0.2s;
-    font-size: 24px;
+    border: none;
+    padding: 0;
 }
 
-.fab-back:hover {
+.fab-btn:hover {
     background-color: var(--primary-dark);
     transform: translateY(-2px);
 }
 
-.fab-back:active {
+.fab-btn:active {
     transform: translateY(0);
 }
 
+.fab-icon {
+    font-size: 14px;
+    line-height: 1;
+    margin-bottom: 2px;
+    font-weight: bold;
+}
+
+.fab-text {
+    font-size: 10px;
+    line-height: 1;
+}
+
 @media (min-width: 769px) {
-    .fab-back {
+    .fab-container {
         display: none !important;
         /* PC에서는 숨김 */
     }
