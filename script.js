@@ -1661,6 +1661,9 @@ async function handleSearch(query) {
     return;
   }
 
+  // 검색 상태 저장
+  App.currentSearchQuery = query;
+
   setPageTitle(`"${query}" 검색 결과`);
   showLoading();
 
@@ -1684,19 +1687,38 @@ async function handleSearch(query) {
     return;
   }
 
-  container.innerHTML = `
-    <p style="margin-bottom:24px;color:var(--text-secondary)">총 ${data.totalResults}개의 결과</p>
-    ${data.posts.length > 0 ? `
+  // [수정] 게시글을 게시판별로 그룹화
+  const groupedPosts = {};
+  if (data.posts && data.posts.length > 0) {
+    data.posts.forEach(post => {
+      const bName = post.boardName || '기타 게시판';
+      if (!groupedPosts[bName]) {
+        groupedPosts[bName] = [];
+      }
+      groupedPosts[bName].push(post);
+    });
+  }
+
+  let postsSectionHtml = '';
+  const boardNames = Object.keys(groupedPosts);
+  if (boardNames.length > 0) {
+    postsSectionHtml = boardNames.map(bName => `
       <section class="section">
-        <h3 class="section-title">📝 게시글 (${data.posts.length})</h3>
+        <h3 class="section-title">📝 ${escapeHtml(bName)} (${groupedPosts[bName].length})</h3>
         <div class="video-grid">
-          ${data.posts.map(post => renderPostCard(post)).join('')}
+          ${groupedPosts[bName].map(post => renderPostCard(post)).join('')}
         </div>
       </section>
-    ` : ''}
+    `).join('');
+  }
+
+  container.innerHTML = `
+    <p style="margin-bottom:24px;color:var(--text-secondary)">총 ${data.totalResults}개의 결과</p>
+    ${postsSectionHtml}
+    <!-- 다른 결과(게시판 자체 검색 등)가 있을 경우 표시 (요청이 있다면 유지, 필요없다면 삭제 가능) -->
     ${data.boards.length > 0 ? `
       <section class="section">
-        <h3 class="section-title">📋 게시판 (${data.boards.length})</h3>
+        <h3 class="section-title">📋 게시판 이름 일치 (${data.boards.length})</h3>
         <div class="board-grid">
           ${data.boards.map(board => `
             <div class="board-card" onclick="navigateTo('board', {boardId:'${board.boardId}'})">
