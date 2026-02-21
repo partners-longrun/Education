@@ -1998,7 +1998,7 @@ select {
 /* FAB (Floating Action Button) Container handling Stacked Up/Back Buttons */
 .fab-container {
     position: fixed;
-    bottom: 16px;
+    bottom: 80px;
     right: 16px;
     display: flex;
     flex-direction: column;
