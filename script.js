@@ -2282,14 +2282,8 @@ function showBoardsTab() {
   }
 
   container.innerHTML = `
-    <div class="dashboard-boards-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
-      ${App.boards.map((board, i) => `
-        <div class="dashboard-board-card" onclick="navigateTo('board', {boardId:'${board.boardId}'})">
-          <div class="board-card-icon">${boardIcons[i % boardIcons.length]}</div>
-          <div class="board-card-name">${escapeHtml(board.boardName)}</div>
-          <div class="board-card-count">${board.postCount !== undefined ? board.postCount + '개의 게시글' : ''}</div>
-        </div>
-      `).join('')}
+    <div class="board-grid">
+      ${renderBoardCards(App.boards)}
     </div>
 
     ${App.isAdmin ? `
