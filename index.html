@@ -9,6 +9,58 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+
+    <!-- Tailwind CSS & Custom Config -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            corePlugins: {
+                // 부모 style.css와의 충돌을 막기 위해 preflight 비활성화
+                preflight: false,
+            },
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#F37321', // Orange
+                        primaryHover: '#d96316',
+                        secondary: '#1e293b', // Dark Blue/Gray
+                        brandNavy: '#1B1F3B', // Deep Navy for Left Panel
+                    },
+                    animation: {
+                        fadeIn: "fadeIn 0.5s ease-out forwards",
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            "0%": { opacity: "0", transform: "translateY(10px)" },
+                            "100%": { opacity: "1", transform: "translateY(0)" },
+                        },
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+        /* Tailwind preflight가 꺼져있으므로 button, input 기본 스타일 약간 보완 (login screen용) */
+        #login-screen {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+
+        #login-screen input {
+            box-sizing: border-box;
+        }
+
+        #login-screen input:focus {
+            outline: none;
+        }
+
+        #login-screen button {
+            border: none;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+    </style>
 </head>
 
 <body>
@@ -21,88 +73,96 @@
     </div>
 
     <!-- 로그인 화면 -->
-    <div id="login-screen" class="login-screen" style="display: none;">
-        <div class="bg-shapes">
-            <div class="shape"></div>
-            <div class="shape"></div>
-            <div class="shape"></div>
-        </div>
+    <div id="login-screen"
+        class="min-h-screen flex-col md:flex-row w-full font-sans bg-gray-50 text-gray-800 antialiased text-sm md:text-base"
+        style="display: none;">
 
-        <div class="branding-panel">
-            <div class="branding-content">
-                <h1 class="branding-title">파트너스본부</h1>
-                <p class="branding-subtitle">
-                    성공적인 영업을 위한 교육 플랫폼<br>
-                    언제 어디서나 학습하고 성장하세요
-                </p>
-                <div class="branding-features">
-                    <div class="feature-item">
-                        <div class="feature-icon">📺</div>
-                        <span class="feature-text">다양한 교육 영상과 자료</span>
-                    </div>
-                    <div class="feature-item">
-                        <div class="feature-icon">📚</div>
-                        <span class="feature-text">체계적인 커리큘럼</span>
-                    </div>
-                    <div class="feature-item">
-                        <div class="feature-icon">💬</div>
-                        <span class="feature-text">동료들과 함께하는 학습</span>
+        <!-- Left Panel (Desktop Only) -->
+        <div
+            class="hidden md:flex md:w-1/2 bg-brandNavy flex-col items-center justify-center p-12 text-center relative overflow-hidden text-white">
+            <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
+            <div class="z-10 flex flex-col items-center gap-8 animate-fadeIn">
+                <div class="space-y-4 mb-8">
+                    <h1 class="text-4xl font-bold tracking-wider">파트너스 교육관</h1>
+                    <p class="text-gray-300 text-lg font-light leading-relaxed">
+                        성공적인 영업을 위한 교육 플랫폼<br>
+                        언제 어디서나 쉽고 빠르게 학습하세요
+                    </p>
+                </div>
+
+                <div class="space-y-6 w-full max-w-sm text-left">
+                    <div
+                        class="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
+                        <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                            <!-- Icon -->
+                            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                </path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base">체계적인 교육 제공</h3>
+                            <p class="text-xs text-gray-400">영업 노하우 및 실무 중심의 교육 과정</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="login-panel">
-            <div class="login-container">
-                <!-- 모바일용 로고 -->
-                <div class="login-mobile-logo">
-                    <h1 class="login-mobile-title">파트너스본부</h1>
-                </div>
+        <!-- Right Panel (Mobile & Desktop) -->
+        <div class="w-full md:w-1/2 bg-white flex flex-col h-screen md:h-auto overflow-y-auto">
+            <div class="flex-grow flex items-center justify-center p-6 sm:p-12">
+                <div class="w-[85%] md:w-full max-w-sm space-y-10 animate-fadeIn mx-auto">
 
-                <div class="login-header">
-                    <h2 class="login-title">파트너스 <span>교육관</span></h2>
-                    <p class="login-subtitle">계정 정보를 입력해 주세요</p>
-                </div>
-
-                <form id="login-form" class="login-form">
-                    <div class="form-group">
-                        <label class="form-label">사번</label>
-                        <input type="text" id="employee-id" class="form-input" placeholder="사번을 입력하세요"
-                            autocomplete="username">
+                    <!-- Mobile Header Logo -->
+                    <div class="md:hidden text-center mb-10 mt-16">
+                        <h1 class="text-2xl font-bold text-gray-800 tracking-tight">파트너스 교육관</h1>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">비밀번호</label>
-                        <input type="password" id="password" class="form-input" placeholder="비밀번호를 입력하세요"
-                            autocomplete="current-password">
+                    <!-- Main Title -->
+                    <div class="text-center space-y-2">
+                        <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">파트너스 <span
+                                class="text-primary">교육관</span></h2>
+                        <p class="text-gray-400 text-sm">계정 정보를 입력해 주세요</p>
                     </div>
 
-                    <div class="form-helper">
-                        <label class="remember-me">
-                            <input type="checkbox" id="remember-me">
-                            로그인 상태 유지
-                        </label>
+                    <!-- Login Form -->
+                    <form id="login-form" class="space-y-6">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-bold text-gray-700 text-left">사번</label>
+                            <input type="text" id="employee-id" placeholder="사번을 입력하세요"
+                                class="w-full px-4 py-3.5 rounded-lg border border-gray-200 bg-white focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition duration-200 placeholder-gray-400 text-center"
+                                autocomplete="username" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-bold text-gray-700 text-left">비밀번호</label>
+                            <input type="password" id="password" placeholder="비밀번호를 입력하세요"
+                                class="w-full px-4 py-3.5 rounded-lg border border-gray-200 bg-white focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition duration-200 placeholder-gray-400 text-center"
+                                autocomplete="current-password" required>
+                        </div>
+
+                        <input type="checkbox" id="remember-me" style="display: none;">
+
+                        <button type="submit" id="login-btn"
+                            class="w-full bg-primary text-white font-bold py-4 rounded-lg hover:bg-primaryHover hover:shadow-lg transition duration-200 text-lg flex justify-center items-center">
+                            <span class="btn-text">로그인</span>
+                            <span class="btn-loading" style="display: none;">로그인 중...</span>
+                        </button>
+
+                        <div id="login-error" class="bg-red-100 text-red-600 p-3 mt-4 rounded-lg text-sm text-center"
+                            style="display: none;"></div>
+                    </form>
+
+                    <div class="pt-4 text-center">
+                        <p class="text-xs text-gray-400 mb-2">도움이 필요하신가요?</p>
+                        <p class="text-xs text-gray-400">로그인에 문제가 있으시면 관리자에게 문의하세요</p>
+                        <p class="text-xs text-gray-300 mt-8 font-light">© 2024 파트너스 교육관. All rights reserved.</p>
                     </div>
-
-                    <button type="submit" class="login-button" id="login-btn">
-                        <span class="btn-text">로그인</span>
-                        <span class="btn-loading" style="display: none;">로그인 중...</span>
-                    </button>
-
-                    <div id="login-error" class="login-error" style="display: none;"></div>
-                </form>
-
-                <div class="login-divider">도움이 필요하신가요?</div>
-
-                <div class="help-section">
-                    <p class="help-text">로그인에 문제가 있으시면 관리자에게 문의하세요</p>
-                </div>
-
-                <div class="login-footer">
-                    © 2024 파트너스 교육관. All rights reserved.
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- 메인 앱 화면 -->
