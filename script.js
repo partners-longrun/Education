@@ -938,10 +938,18 @@ async function renderPostDetail(post) {
     if (board) boardName = board.boardName;
   }
   setPageTitle(boardName || '게시판');
-  setBreadcrumb([
-    { label: '홈', page: 'dashboard' },
-    { label: boardName || '게시판', page: 'board', params: { boardId: post.boardId } }
-  ]);
+  // [수정] 검색 화면에서 진입했는지 여부에 따른 브레드크럼 분기
+  if (App.currentSearchQuery) {
+    setBreadcrumb([
+      { label: '홈', page: 'dashboard' },
+      { label: `"${App.currentSearchQuery}" 검색결과로 돌아가기`, onClick: `handleSearch('${App.currentSearchQuery}')` }
+    ]);
+  } else {
+    setBreadcrumb([
+      { label: '홈', page: 'dashboard' },
+      { label: boardName || '게시판', page: 'board', params: { boardId: post.boardId } }
+    ]);
+  }
 
   // [신규] 사이드바 네비게이션 싱크 맞추기 (대시보드에서 진입 시)
   if (post.boardId) {
@@ -1919,7 +1927,9 @@ function setBreadcrumb(items, actionHtml) {
     if (index > 0) {
       html += '<span class="breadcrumb-separator">/</span>';
     }
-    if (item.page) {
+    if (item.onClick) {
+      html += '<a href="#" onclick="event.preventDefault();' + item.onClick + '">' + escapeHtml(item.label) + '</a>';
+    } else if (item.page) {
       const params = item.params ? JSON.stringify(item.params).replace(/"/g, "'") : '{}';
       html += '<a href="#" onclick="event.preventDefault();navigateTo(\'' + item.page + '\',' + params + ')">' + escapeHtml(item.label) + '</a>';
     } else {
