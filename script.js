@@ -1236,10 +1236,13 @@ async function showBoardModal(boardId = null) {
             <label class="form-label">설명</label>
             <textarea class="form-input" id="modal-board-desc" rows="3" placeholder="게시판 설명을 입력하세요">${board ? escapeHtml(board.description || '') : ''}</textarea>
           </div>
-          <div class="form-group" style="display:flex; align-items:center; gap:8px;">
-            <input type="checkbox" id="modal-board-show" ${board && board.showOnDashboard ? 'checked' : ''}>
-            <label for="modal-board-show" class="form-label" style="margin-bottom:0;">홈 대시보드에 최신글 노출하기</label>
-          </div>
+          <label style="display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 16px; background: var(--background); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='var(--background)'">
+            <input type="checkbox" id="modal-board-show" ${board && board.showOnDashboard ? 'checked' : ''} style="width: 22px; height: 22px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 15px; font-weight: 600; color: var(--text-primary);">홈 대시보드 최신글 노출</span>
+              <span style="font-size: 13px; color: var(--text-secondary);">이 게시판에 올라오는 최신글 3개를 메인 홈에 보여줍니다.</span>
+            </div>
+          </label>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick="closeModal()">취소</button>
