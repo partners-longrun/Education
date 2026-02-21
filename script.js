@@ -1786,7 +1786,7 @@ function renderBoardCards(boards) {
   }
   const icons = ['📚', '💼', '📊', '🎯', '📢'];
   return boards.map((b, i) => {
-    const totalPosts = (b.videoCount || 0) + (b.fileCount || 0);
+    const totalPosts = b.postCount || 0;
     return `
     <div class="board-card" style="padding:12px 16px !important;" onclick="navigateTo('board', {boardId:'${b.boardId}'})">
       <div class="board-header" style="display:flex; align-items:center; gap:8px;">
@@ -1796,7 +1796,7 @@ function renderBoardCards(boards) {
           <span style="font-size:13px; font-weight:normal; color:var(--text-secondary, #666);">(${totalPosts})</span>
         </h3>
       </div>
-      <p class="board-desc" style="margin-top:6px; font-size:13px;">${escapeHtml(b.description || '게시판 설명이 없습니다.')}</p>
+      <p class="board-desc" style="margin:6px 0 0 0 !important; font-size:13px;">${escapeHtml(b.description || '게시판 설명이 없습니다.')}</p>
     </div>
   `;
   }).join('');
@@ -2300,7 +2300,7 @@ function showBoardsTab() {
             <div class="board-icon" style="width:32px !important; height:32px !important; font-size:18px !important;">📋</div>
             <h3 class="board-title" style="margin:0; font-size:15px;">게시판 관리</h3>
           </div>
-          <p class="board-desc" style="margin-top:6px; font-size:13px;">게시판을 새로 만들거나 공개 여부를 설정합니다.</p>
+          <p class="board-desc" style="margin:6px 0 0 0 !important; font-size:13px;">게시판을 새로 만들거나 공개 여부를 설정합니다.</p>
         </div>
         
         <div class="board-card" style="padding:12px 16px !important; border-left:4px solid #3498db;" onclick="navigateTo('admin-posts')">
@@ -2308,7 +2308,7 @@ function showBoardsTab() {
             <div class="board-icon" style="width:32px !important; height:32px !important; font-size:18px !important;">📝</div>
             <h3 class="board-title" style="margin:0; font-size:15px;">게시글 관리</h3>
           </div>
-          <p class="board-desc" style="margin-top:6px; font-size:13px;">개별 게시글을 확인하거나 삭제 처리할 수 있습니다.</p>
+          <p class="board-desc" style="margin:6px 0 0 0 !important; font-size:13px;">개별 게시글을 확인하거나 삭제 처리할 수 있습니다.</p>
         </div>
         
         <div class="board-card" style="padding:12px 16px !important; border-left:4px solid #2ecc71;" onclick="navigateTo('admin-logs')">
@@ -2316,7 +2316,7 @@ function showBoardsTab() {
             <div class="board-icon" style="width:32px !important; height:32px !important; font-size:18px !important;">📊</div>
             <h3 class="board-title" style="margin:0; font-size:15px;">로그인 기록</h3>
           </div>
-           <p class="board-desc" style="margin-top:6px; font-size:13px;">사용자들의 접속 로그를 모니터링합니다.</p>
+           <p class="board-desc" style="margin:6px 0 0 0 !important; font-size:13px;">사용자들의 접속 로그를 모니터링합니다.</p>
         </div>
       </div>
     </section>
