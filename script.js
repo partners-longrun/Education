@@ -1673,9 +1673,25 @@ async function handleSearch(query) {
   App.currentSearchQuery = query;
 
   setPageTitle(`"${query}" 검색 결과`);
+  // [수정] 검색 화면으로 보여질 때는 브레드크럼 부분을 '홈' 하나만 나오게 초기화
+  setBreadcrumb([{ label: '홈', page: 'dashboard' }]);
   showLoading();
 
-  const result = await api('search', { query });
+  // [신규] 검색 결과 로컬 캐싱 확인
+  const cacheKey = 'search_' + query;
+  const cachedData = LocalCache.get(cacheKey);
+  let result;
+
+  if (cachedData && cachedData.data) {
+    result = { success: true, data: cachedData.data };
+    hideLoading();
+  } else {
+    result = await api('search', { query });
+    if (result.success) {
+      LocalCache.set(cacheKey, result.data, 5); // 5분 캐시
+    }
+  }
+
   if (!result.success) {
     showError(result.error);
     return;
@@ -1712,9 +1728,9 @@ async function handleSearch(query) {
   if (boardNames.length > 0) {
     postsSectionHtml = boardNames.map(bName => `
       <section class="section">
-        <h3 class="section-title">📝 ${escapeHtml(bName)} (${groupedPosts[bName].length})</h3>
-        <div class="video-grid">
-          ${groupedPosts[bName].map(post => renderPostCard(post)).join('')}
+        <h3 class="section-title" style="margin-bottom:12px;">📝 ${escapeHtml(bName)} (${groupedPosts[bName].length})</h3>
+        <div class="simple-list">
+          ${renderSimpleList(groupedPosts[bName], '검색 결과가 없습니다.', 'file')}
         </div>
       </section>
     `).join('');
