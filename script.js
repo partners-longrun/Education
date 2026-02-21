@@ -1788,15 +1788,15 @@ function renderBoardCards(boards) {
   return boards.map((b, i) => {
     const totalPosts = (b.videoCount || 0) + (b.fileCount || 0);
     return `
-    <div class="board-card" onclick="navigateTo('board', {boardId:'${b.boardId}'})">
+    <div class="board-card" style="padding:12px 16px;" onclick="navigateTo('board', {boardId:'${b.boardId}'})">
       <div class="board-header" style="display:flex; align-items:center; gap:8px;">
-        <div class="board-icon">${icons[i % icons.length]}</div>
-        <h3 class="board-title" style="margin:0; font-size:16px; display:flex; align-items:center; gap:6px;">
+        <div class="board-icon" style="width:32px; height:32px; font-size:18px;">${icons[i % icons.length]}</div>
+        <h3 class="board-title" style="margin:0; font-size:15px; display:flex; align-items:center; gap:6px;">
           ${escapeHtml(b.boardName)}
-          <span style="font-size:14px; font-weight:normal; color:var(--text-secondary, #666);">(${totalPosts})</span>
+          <span style="font-size:13px; font-weight:normal; color:var(--text-secondary, #666);">(${totalPosts})</span>
         </h3>
       </div>
-      <p class="board-desc" style="margin-top:8px;">${escapeHtml(b.description || '게시판 설명이 없습니다.')}</p>
+      <p class="board-desc" style="margin-top:6px; font-size:13px;">${escapeHtml(b.description || '게시판 설명이 없습니다.')}</p>
     </div>
   `;
   }).join('');
@@ -2294,18 +2294,29 @@ function showBoardsTab() {
           관리자
         </h2>
       </div>
-      <div class="dashboard-boards-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
-        <div class="dashboard-board-card" style="border-left-color:#e74c3c;" onclick="navigateTo('admin-boards')">
-          <div class="board-card-icon">📋</div>
-          <div class="board-card-name">게시판 관리</div>
+      <div class="board-grid">
+        <div class="board-card" style="padding:12px 16px; border-left:4px solid #e74c3c;" onclick="navigateTo('admin-boards')">
+          <div class="board-header" style="display:flex; align-items:center; gap:8px;">
+            <div class="board-icon" style="width:32px; height:32px; font-size:18px;">📋</div>
+            <h3 class="board-title" style="margin:0; font-size:15px;">게시판 관리</h3>
+          </div>
+          <p class="board-desc" style="margin-top:6px; font-size:13px;">게시판을 새로 만들거나 공개 여부를 설정합니다.</p>
         </div>
-        <div class="dashboard-board-card" style="border-left-color:#3498db;" onclick="navigateTo('admin-posts')">
-          <div class="board-card-icon">📝</div>
-          <div class="board-card-name">게시글 관리</div>
+        
+        <div class="board-card" style="padding:12px 16px; border-left:4px solid #3498db;" onclick="navigateTo('admin-posts')">
+           <div class="board-header" style="display:flex; align-items:center; gap:8px;">
+            <div class="board-icon" style="width:32px; height:32px; font-size:18px;">📝</div>
+            <h3 class="board-title" style="margin:0; font-size:15px;">게시글 관리</h3>
+          </div>
+          <p class="board-desc" style="margin-top:6px; font-size:13px;">개별 게시글을 확인하거나 삭제 처리할 수 있습니다.</p>
         </div>
-        <div class="dashboard-board-card" style="border-left-color:#2ecc71;" onclick="navigateTo('admin-logs')">
-          <div class="board-card-icon">📊</div>
-          <div class="board-card-name">로그인 기록</div>
+        
+        <div class="board-card" style="padding:12px 16px; border-left:4px solid #2ecc71;" onclick="navigateTo('admin-logs')">
+          <div class="board-header" style="display:flex; align-items:center; gap:8px;">
+            <div class="board-icon" style="width:32px; height:32px; font-size:18px;">📊</div>
+            <h3 class="board-title" style="margin:0; font-size:15px;">로그인 기록</h3>
+          </div>
+           <p class="board-desc" style="margin-top:6px; font-size:13px;">사용자들의 접속 로그를 모니터링합니다.</p>
         </div>
       </div>
     </section>
