@@ -589,7 +589,7 @@ function navigateTo(page, params = {}, isBack = false) {
 async function loadDashboard() {
   console.time('loadDashboard'); // 성능 측정
 
-  setPageTitle('파트너스 <span style="color:var(--primary)">교육관</span>');
+  setPageTitle('파트너스 <span style="color:var(--primary)">아카데미</span>');
   setBreadcrumb([]);
 
   const container = document.getElementById('page-container');
