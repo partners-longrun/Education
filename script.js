@@ -2012,8 +2012,17 @@ function closeModal(e) {
 
 function escapeHtml(text) {
   if (!text) return '';
+  // 기존에 DB에 &quot;, &#x27; 로 저장된 문구들 복원 (하위 호환성)
+  let processedText = String(text)
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    // [보완] &amp; 도 역치환해주면 기존 데이터가 더 완벽하게 복원됩니다 (옵션)
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+    
   const div = document.createElement('div');
-  div.textContent = text;
+  div.textContent = processedText;
   return div.innerHTML;
 }
 
