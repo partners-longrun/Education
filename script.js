@@ -2696,7 +2696,8 @@ function showBoardsTab() {
                ${boardIcons[index % boardIcons.length]}
             </div>
             <h3 class="board-title" style="font-size: 15px; margin-bottom: 4px;">${escapeHtml(board.boardName)}</h3>
-            <p class="board-count" style="font-size: 12px; color: var(--text-secondary);">게시글 ${board.postCount || 0}개</p>
+            ${board.description ? `<p class="board-desc" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;">${escapeHtml(board.description)}</p>` : ''}
+            <p class="board-count" style="font-size: 12px; color: var(--text-secondary); opacity: 0.8;">게시글 ${board.postCount || 0}개</p>
           </div>
         `).join('')}
       </div>
