@@ -2429,11 +2429,14 @@ select {
 .dashboard-board-card {
     background: var(--surface);
     border-radius: 12px;
-    padding: 16px;
+    padding: 14px;
     box-shadow: var(--shadow);
     cursor: pointer;
     transition: all 0.3s ease;
     border-left: 4px solid var(--primary);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .dashboard-board-card:hover {
@@ -2442,20 +2445,29 @@ select {
     border-left-color: var(--primary-dark);
 }
 
-.dashboard-board-card .board-card-icon {
-    font-size: 18px;
+.board-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     margin-bottom: 8px;
 }
 
-.dashboard-board-card .board-card-name {
-    font-size: 15px;
+.dashboard-board-card .board-title {
+    font-size: 16px;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 4px;
+    margin: 0;
 }
 
-.dashboard-board-card .board-card-count {
+.dashboard-board-card .board-desc {
     font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.dashboard-board-card .board-count {
+    font-size: 12px;
     color: var(--text-secondary);
 }
 
