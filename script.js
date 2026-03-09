@@ -1213,7 +1213,7 @@ async function loadAdminBoards() {
   const container = document.getElementById('page-container');
   container.innerHTML = `
     <div style="margin-bottom:20px; display:flex; justify-content:flex-end;">
-      <button class="btn btn-primary" onclick="showBoardModal()">+ 게시판 추가</button>
+      <button class="btn btn-primary" onclick="showBoardModal(null, event)">+ 게시판 추가</button>
     </div>
     <div class="admin-table-container">
       <table class="admin-table">
@@ -1236,7 +1236,7 @@ async function loadAdminBoards() {
               <td>${board.showOnDashboard ? 'O' : 'X'}</td>
               <td>${board.postCount}</td>
               <td class="admin-actions">
-                <button class="admin-btn edit" onclick="showBoardModal('${board.boardId}')">수정</button>
+                <button class="admin-btn edit" onclick="showBoardModal('${board.boardId}', event)">수정</button>
                 <button class="admin-btn delete" onclick="deleteBoard('${board.boardId}')">삭제</button>
               </td>
             </tr>
@@ -1247,11 +1247,32 @@ async function loadAdminBoards() {
   `;
 }
 
-async function showBoardModal(boardId = null) {
+async function showBoardModal(boardId = null, btnEvent = null) {
+  // 클릭 이벤트(MouseEvent)가 boardId로 들어오는 것을 방지
+  if (boardId && typeof boardId !== 'string' && typeof boardId !== 'number') {
+    boardId = null;
+  }
+
+  // 로딩 상태 표시
+  let btn = null;
+  let originalBtnText = '';
+  if (btnEvent && btnEvent.currentTarget) {
+    btn = btnEvent.currentTarget;
+    originalBtnText = btn.innerHTML;
+    btn.innerHTML = '<span class="loading-spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:4px;"></span> 처리중...';
+    btn.disabled = true;
+  }
+
   let board = null;
   if (boardId) {
     const result = await api('getBoardById', { boardId });
     if (result.success) board = result.data;
+  }
+
+  // 모달 렌더링 후 버튼 복구
+  if (btn) {
+    btn.innerHTML = originalBtnText;
+    btn.disabled = false;
   }
 
   const html = `
@@ -1358,7 +1379,7 @@ async function loadAdminPosts(page = 1) {
   if (posts.length === 0) {
     container.innerHTML = `
       <div style="margin-bottom:20px; display:flex; justify-content:flex-end;">
-        <button class="btn btn-primary" onclick="showPostModal()">+ 게시글 작성</button>
+        <button class="btn btn-primary" onclick="showPostModal(null, event)">+ 게시글 작성</button>
       </div>
       <div class="empty-state">
         <div class="empty-state-icon">📝</div>
@@ -1371,7 +1392,7 @@ async function loadAdminPosts(page = 1) {
 
   container.innerHTML = `
     <div style="margin-bottom:20px; display:flex; justify-content:flex-end;">
-      <button class="btn btn-primary" onclick="showPostModal()">+ 게시글 작성</button>
+      <button class="btn btn-primary" onclick="showPostModal(null, event)">+ 게시글 작성</button>
     </div>
     <div class="admin-table-container">
       <table class="admin-table">
@@ -1396,7 +1417,7 @@ async function loadAdminPosts(page = 1) {
               <td>${post.likeCount}</td>
               <td>${formatDate(post.createdAt)}</td>
               <td class="admin-actions">
-                <button class="admin-btn edit" onclick="showPostModal('${post.postId}')">수정</button>
+                <button class="admin-btn edit" onclick="showPostModal('${post.postId}', event)">수정</button>
                 <button class="admin-btn delete" onclick="deletePost('${post.postId}')">삭제</button>
               </td>
             </tr>
@@ -1409,11 +1430,32 @@ async function loadAdminPosts(page = 1) {
 }
 
 // ========== 게시글 작성/수정 모달 ==========
-async function showPostModal(postId = null) {
+async function showPostModal(postId = null, btnEvent = null) {
+  // 클릭 이벤트 방어
+  if (postId && typeof postId !== 'string' && typeof postId !== 'number') {
+    postId = null;
+  }
+
+  // 로딩 상태 표시
+  let btn = null;
+  let originalBtnText = '';
+  if (btnEvent && btnEvent.currentTarget) {
+    btn = btnEvent.currentTarget;
+    originalBtnText = btn.innerHTML;
+    btn.innerHTML = '<span class="loading-spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:4px;"></span> 처리중...';
+    btn.disabled = true;
+  }
+
   let post = null;
   if (postId) {
     const result = await api('getPostById', { postId });
     if (result.success) post = result.data;
+  }
+
+  // 모달 로딩 후 버튼 복구
+  if (btn) {
+    btn.innerHTML = originalBtnText;
+    btn.disabled = false;
   }
 
   // 게시판 목록
