@@ -142,6 +142,25 @@ async function init() {
         LocalCache.set('boards', App.boards, 30); // 30분 캐싱
       }
 
+      // [신규] 최신 공지사항 사전 캐싱 (모달 즉시 로딩용)
+      try {
+        const noticeBoard = App.boards ? App.boards.find(b => b.boardName === '공지사항') : null;
+        if (noticeBoard) {
+          const cacheKey = `posts_${noticeBoard.boardId}_page1`;
+          const cachedPosts = LocalCache.get(cacheKey);
+          if (!cachedPosts || !cachedPosts.data || cachedPosts.data.length === 0) {
+            // 백그라운드 비동기로 최신 공지사항 1개 미리 불러오기
+            api('getPosts', { boardId: noticeBoard.boardId, page: 1, pageSize: 1 }).then(res => {
+              if (res.success && res.data && res.data.length > 0) {
+                LocalCache.set(cacheKey, res, 5); // 5분 캐싱
+              }
+            }).catch(e => console.error('Prefetch notice failed', e));
+          }
+        }
+      } catch (e) {
+        console.error('Notice prefetch error:', e);
+      }
+
       // 세션 스토리지에도 저장 (호환성)
       sessionStorage.setItem('boardList', JSON.stringify(App.boards));
 
@@ -2443,36 +2462,40 @@ async function showLatestNotice(e) {
     return;
   }
 
-  showLoading();
+  // 2. 공지사항 게시글 목록 조회 (캐시 우선 검사)
+  let latestPost = null;
+  const cacheKey = `posts_${noticeBoard.boardId}_page1`;
+  const cachedPosts = LocalCache.get(cacheKey);
 
-  // 2. 공지사항 게시글 목록 조회 (1페이지, 1개)
-  try {
-    // 캐시 확인 시도
-    let latestPost = null;
-    const cacheKey = `posts_${noticeBoard.boardId}_page1`;
-    const cachedPosts = LocalCache.get(cacheKey);
-
-    if (cachedPosts && cachedPosts.data && cachedPosts.data.length > 0) {
-      latestPost = cachedPosts.data[0];
-    } else {
+  if (cachedPosts && cachedPosts.data && cachedPosts.data.length > 0) {
+    // 캐시가 있으면 즉시 렌더링 (로딩창 띄우지 않음)
+    latestPost = cachedPosts.data[0];
+  } else {
+    // 캐시가 없으면 로딩 표시 후 API 호출
+    showLoading();
+    try {
       const result = await api('getPosts', { boardId: noticeBoard.boardId, page: 1, pageSize: 1 });
       if (result.success && result.data && result.data.length > 0) {
         latestPost = result.data[0];
         LocalCache.set(cacheKey, result, 5); // 결과 캐싱
       }
-    }
-
-    hideLoading();
-
-    if (!latestPost) {
-      showToast('등록된 공지사항이 없습니다.', 'info');
+    } catch (error) {
+      hideLoading();
+      showToast('공지사항을 불러오는 중 오류가 발생했습니다.', 'error');
       return;
     }
+    hideLoading();
+  }
 
-    // 3. 팝업(모달) 렌더링 - 높이와 여백 축소
-    const modalHtml = `
+  if (!latestPost) {
+    showToast('등록된 공지사항이 없습니다.', 'info');
+    return;
+  }
+
+  // 3. 팝업(모달) 렌더링 - 높이 축소 및 너비 확대
+  const modalHtml = `
       <div class="modal-overlay" onclick="closeModal(event)">
-        <div class="modal modal-lg" style="margin: auto 16px;" onclick="event.stopPropagation()">
+        <div class="modal modal-lg" style="width: 100%; max-width: 500px;" onclick="event.stopPropagation()">
           <div class="modal-header" style="padding: 16px 20px; min-height: 50px;">
             <h3 class="modal-title" style="font-size: 16px;">📢 최신 공지사항</h3>
             <button class="modal-close" onclick="closeModal()">×</button>
@@ -2495,12 +2518,7 @@ async function showLatestNotice(e) {
       </div>
     `;
 
-    document.getElementById('modal-container').innerHTML = modalHtml;
-
-  } catch (error) {
-    hideLoading();
-    showToast('공지사항을 불러오는 중 오류가 발생했습니다.', 'error');
-  }
+  document.getElementById('modal-container').innerHTML = modalHtml;
 }
 
 // [신규추가] 모바일 하단 탭바 기능 추가 - 게시판 탭
