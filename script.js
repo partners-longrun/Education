@@ -2692,12 +2692,16 @@ function showBoardsTab() {
       <div class="dashboard-boards-grid">
         ${boardsToDisplay.map((board, index) => `
           <div class="dashboard-board-card" onclick="navigateTo('board', {boardId:'${board.boardId}'})">
-            <div class="board-icon-wrapper" style="font-size: 24px; margin-bottom: 8px;">
-               ${boardIcons[index % boardIcons.length]}
+            <div class="board-card-header" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+              <div class="board-icon-wrapper" style="font-size: 20px; width: 36px; height: 36px; background: var(--background); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                 ${boardIcons[index % boardIcons.length]}
+              </div>
+              <h3 class="board-title" style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;">${escapeHtml(board.boardName)}</h3>
             </div>
-            <h3 class="board-title" style="font-size: 15px; margin-bottom: 4px;">${escapeHtml(board.boardName)}</h3>
             ${board.description ? `<p class="board-desc" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;">${escapeHtml(board.description)}</p>` : ''}
-            <p class="board-count" style="font-size: 12px; color: var(--text-secondary); opacity: 0.8;">게시글 ${board.postCount || 0}개</p>
+            <div style="text-align: right;">
+              <p class="board-count" style="font-size: 12px; color: var(--text-secondary); opacity: 0.8; margin: 0;">게시글 ${board.postCount || 0}개</p>
+            </div>
           </div>
         `).join('')}
       </div>
