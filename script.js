@@ -1,5 +1,5 @@
 /**
- * 파트너스 교육관 - 프론트엔드 JavaScript (최적화 버전)
+ * 파트너스 아카데미 - 프론트엔드 JavaScript (최적화 버전)
  * 
  * [추가된 기능]
  * - LocalCache: 로컬 스토리지 캐싱
@@ -440,7 +440,7 @@ function showDashboardLoading() {
     overlay.className = 'dashboard-loading-overlay';
     overlay.innerHTML = `
       <div class="dashboard-loading-spinner"></div>
-      <div class="dashboard-loading-text">파트너스 교육관 데이터를 불러오는 중...</div>
+      <div class="dashboard-loading-text">파트너스 아카데미 데이터를 불러오는 중...</div>
     `;
     document.body.appendChild(overlay);
   }
@@ -683,7 +683,7 @@ function renderDashboard(data) {
     <!-- 환영 인사 -->
     <div class="welcome-section" style="margin-bottom: 30px;">
       <h1 class="welcome-title">안녕하세요, ${escapeHtml(App.user.name)}님 👋</h1>
-      <p class="welcome-subtitle">파트너스 교육관에 오신 것을 환영합니다.</p>
+      <p class="welcome-subtitle">파트너스 아카데미에 오신 것을 환영합니다.</p>
     </div>
     
     <!-- 대시보드 옵션 켜진 게시판의 최신글 보기 -->
