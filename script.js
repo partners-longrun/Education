@@ -1870,11 +1870,11 @@ async function loadAdminLogs(params = {}) {
         <div class="stat-value">${dashData.summary.thisMonthTotal || 0}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">당월 활성 사용자</div>
+        <div class="stat-label">조회 기간내 활성 사용자</div>
         <div class="stat-value">${dashData.summary.activeUsers || 0}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">전체 로그 수</div>
+        <div class="stat-label">조회 기간내 로그인</div>
         <div class="stat-value">${logsResult.pagination ? logsResult.pagination.total : '-'}</div>
       </div>
     </div>
