@@ -1885,7 +1885,7 @@ async function loadAdminLogs(params = {}) {
       <!-- 시간대별 분포 -->
       <div class="dashboard-chart-container">
         <div class="dashboard-chart-header">
-          <h3 class="dashboard-chart-title">시간대별 분포 (전체)</h3>
+          <h3 class="dashboard-chart-title">시간대별 분포 (조회 기간)</h3>
         </div>
         <div class="hour-dist-grid">
           ${dashData.hourDistribution.map(h => {
@@ -1906,10 +1906,10 @@ async function loadAdminLogs(params = {}) {
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;" class="dashboard-tables-row">
-      <!-- 당월 로그인 사용자 목록 (횟수순) -->
+      <!-- 조회 기간 로그인 사용자 목록 (횟수순) -->
       <section class="section">
         <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 class="section-title" style="margin:0;">👤 당월 로그인 사용자 (${dashData.monthlyStats.length}명)</h3>
+          <h3 class="section-title" style="margin:0;">👤 조회 기간의 로그인 사용자 (${dashData.periodStats.length}명)</h3>
         </div>
         <div class="admin-table-container" style="max-height: 400px; overflow-y: auto;">
           <table class="admin-table">
@@ -1921,23 +1921,23 @@ async function loadAdminLogs(params = {}) {
               </tr>
             </thead>
             <tbody>
-              ${dashData.monthlyStats.map(s => `
+              ${dashData.periodStats.map(s => `
                 <tr>
                   <td>${escapeHtml(s.employeeId)}</td>
                   <td>${escapeHtml(s.name)}</td>
                   <td style="color: var(--primary); font-weight: 700;">${s.count}회</td>
                 </tr>
               `).join('')}
-              ${dashData.monthlyStats.length === 0 ? '<tr><td colspan="3" style="text-align:center; padding: 20px;">기록이 없습니다.</td></tr>' : ''}
+              ${dashData.periodStats.length === 0 ? '<tr><td colspan="3" style="text-align:center; padding: 20px;">기록이 없습니다.</td></tr>' : ''}
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- 최근 로그인 기록 -->
+      <!-- 조회 기간 로그인 상세 -->
       <section class="section">
         <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 class="section-title" style="margin:0;">📋 최근 로그인 상세</h3>
+          <h3 class="section-title" style="margin:0;">📋 조회 기간의 로그인 상세</h3>
         </div>
         <div class="admin-table-container">
           <table class="admin-table">
