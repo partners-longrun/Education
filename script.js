@@ -1819,13 +1819,13 @@ async function loadAdminLogs(params = {}) {
   const dashData = dashResult.data;
   const logs = logsResult.success ? logsResult.data : [];
 
-  // 날짜 기본값 설정 (오늘 기준 당월)
+  // 날짜 기본값 설정 (오늘)
   const now = new Date();
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
   const today = now.toISOString().split('T')[0];
 
-  const startDate = params.startDate || firstDay;
+  const startDate = params.startDate || today;
   const endDate = params.endDate || today;
+  const currentPreset = params.preset || 'today';
 
   // 시간대별 상위 3개 파악
   const sortedHours = [...dashData.hourDistribution].sort((a, b) => b.count - a.count);
@@ -1837,12 +1837,12 @@ async function loadAdminLogs(params = {}) {
       <div class="dashboard-filter-group">
         <label class="dashboard-filter-label">기간 설정:</label>
         <select id="dash-date-preset" class="dashboard-filter-input" onchange="handleDatePresetChange(this.value)">
-          <option value="custom">직접 선택</option>
-          <option value="today">오늘</option>
-          <option value="week">최근 1주일</option>
-          <option value="month30">최근 30일</option>
-          <option value="thisMonth" selected>이번달</option>
-          <option value="lastMonth">지난달</option>
+          <option value="custom" ${currentPreset === 'custom' ? 'selected' : ''}>직접 선택</option>
+          <option value="today" ${currentPreset === 'today' ? 'selected' : ''}>오늘</option>
+          <option value="week" ${currentPreset === 'week' ? 'selected' : ''}>최근 1주일</option>
+          <option value="month30" ${currentPreset === 'month30' ? 'selected' : ''}>최근 30일</option>
+          <option value="thisMonth" ${currentPreset === 'thisMonth' ? 'selected' : ''}>이번달</option>
+          <option value="lastMonth" ${currentPreset === 'lastMonth' ? 'selected' : ''}>지난달</option>
         </select>
         <input type="date" id="dash-start-date" class="dashboard-filter-input" value="${startDate}">
         <span>~</span>
@@ -1897,7 +1897,7 @@ async function loadAdminLogs(params = {}) {
     return `
               <div class="hour-box ${h.count > 0 ? 'active' : ''} ${rankClass}" title="${h.hour}: ${h.count}회">
                 <span class="hour-box-label">${h.hour}</span>
-                <span class="hour-box-value">${h.count}</span>
+                <span class="hour-box-value">${h.count > 0 ? h.count : '-'}</span>
               </div>
             `;
   }).join('')}
@@ -2035,9 +2035,13 @@ function handleDatePresetChange(preset) {
 
   startInput.value = formatDate(start);
   endInput.value = formatDate(end);
+
+  // 즉시 조회 실행
+  searchLoginLogs();
 }
 
 async function searchLoginLogs() {
+  const preset = document.getElementById('dash-date-preset').value;
   const startDate = document.getElementById('dash-start-date').value;
   const endDate = document.getElementById('dash-end-date').value;
 
@@ -2046,7 +2050,7 @@ async function searchLoginLogs() {
     return;
   }
 
-  loadAdminLogs({ startDate, endDate });
+  loadAdminLogs({ startDate, endDate, preset });
 }
 
 async function showAllLoginLogs(page = 1, params = {}) {
