@@ -1895,23 +1895,12 @@ async function loadAdminLogs(params = {}) {
 
       <!-- 시간대별 분포 -->
       <div class="dashboard-chart-container">
-        <div class="dashboard-chart-header">
-          <h3 class="dashboard-chart-title">시간대별 분포 (조회 기간)</h3>
+        <div class="dashboard-chart-header" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+          <h3 class="dashboard-chart-title" style="margin-bottom: 0;">시간대별 로그인 분포</h3>
+          <span style="font-size: 12px; color: var(--text-secondary);">주황색: 업무시간(08~19시)</span>
         </div>
-        <div class="hour-dist-grid">
-          ${dashData.hourDistribution.map(h => {
-    let rankClass = '';
-    if (h.count > 0) {
-      const rankOrder = topCounts.indexOf(h.count);
-      if (rankOrder !== -1) rankClass = `top-${rankOrder + 1}`;
-    }
-    return `
-              <div class="hour-box ${h.count > 0 ? 'active' : ''} ${rankClass}" title="${h.hour}: ${h.count}회">
-                <span class="hour-box-label">${h.hour}</span>
-                <span class="hour-box-value">${h.count > 0 ? h.count : '-'}</span>
-              </div>
-            `;
-  }).join('')}
+        <div class="chart-bars">
+          ${renderHourDistributionChart(dashData.hourDistribution)}
         </div>
       </div>
     </div>
@@ -1977,6 +1966,27 @@ async function loadAdminLogs(params = {}) {
       </section>
     </div>
   `;
+}
+
+function renderHourDistributionChart(hourData) {
+  if (!hourData || hourData.length === 0) return '';
+  const max = Math.max(...hourData.map(d => d.count), 1);
+
+  return hourData.map(d => {
+    const height = (d.count / max) * 100;
+    const isBusinessHour = d.hour >= 8 && d.hour <= 19;
+    const barColorStyle = isBusinessHour
+      ? 'background: var(--primary);'
+      : 'background: #cbd5e1;'; // Light grey
+
+    return `
+      <div class="chart-bar-wrapper">
+        <div class="chart-bar-value" style="opacity: ${d.count > 0 ? 1 : 0}; ${isBusinessHour ? 'color: var(--primary);' : 'color: #94a3b8;'}">${d.count}</div>
+        <div class="chart-bar" style="height: ${height}%; ${barColorStyle}" title="${d.hour}시: ${d.count}회"></div>
+        <div class="chart-bar-label" style="transform: none; position: static; margin-top: 4px; font-size: 11px;">${d.hour}</div>
+      </div>
+    `;
+  }).join('');
 }
 
 function renderTrendChart(trendData) {
