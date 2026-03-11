@@ -1882,7 +1882,7 @@ async function loadAdminLogs(params = {}) {
       </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;" class="dashboard-charts-row">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;" class="dashboard-charts-row">
       <!-- 최근 30일 추이 -->
       <div class="dashboard-chart-container">
         <div class="dashboard-chart-header">
@@ -1974,7 +1974,8 @@ function renderHourDistributionChart(hourData) {
 
   return hourData.map(d => {
     const height = (d.count / max) * 100;
-    const isBusinessHour = d.hour >= 8 && d.hour <= 19;
+    const hourNum = parseInt(d.hour);
+    const isBusinessHour = hourNum >= 8 && hourNum <= 19;
     const barColorStyle = isBusinessHour
       ? 'background: var(--primary);'
       : 'background: #cbd5e1;'; // Light grey
